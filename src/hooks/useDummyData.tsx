@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Dataset } from "@/pages/DatasetsPage";
 
@@ -253,7 +252,7 @@ export const useDummyData = () => {
                 {
                   id: `unknown-${Date.now()}`,
                   category: 'unknown',
-                  type: 'rect',
+                  type: 'rect' as const,
                   coordinates: [
                     [Math.random() * 800, Math.random() * 600],
                     [(Math.random() * 800) + 100, (Math.random() * 600) + 100]

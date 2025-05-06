@@ -1,9 +1,8 @@
-
 import { useState, useRef, useEffect } from "react";
 import { Stage, Layer, Rect, Line, Circle, Group, Text } from "react-konva";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
-import { Rectangle, Polygon, Pencil } from "lucide-react";
+import { RectangleHorizontal, Pencil } from "lucide-react";
 import { Label } from "@/hooks/useDummyData";
 
 interface Image {
@@ -26,7 +25,7 @@ const AnnotationCanvas = ({
   onUpdateLabel,
   onDeleteLabel,
 }: AnnotationCanvasProps) => {
-  const [tool, setTool] = useState<"select" | "rect" | "polygon" | "point">("select");
+  const [tool, setTool: any] = useState<"select" | "rect" | "polygon" | "point">("select");
   const [selectedLabelId, setSelectedLabelId] = useState<string | null>(null);
   const [drawing, setDrawing] = useState(false);
   const [points, setPoints] = useState<number[]>([]);
@@ -364,7 +363,7 @@ const AnnotationCanvas = ({
           className={tool === "rect" ? "bg-primary hover:bg-primary-hover" : ""}
         >
           <span className="sr-only">矩形</span>
-          <Rectangle size={16} />
+          <RectangleHorizontal size={16} />
         </Button>
         <Button
           size="icon"
@@ -373,7 +372,9 @@ const AnnotationCanvas = ({
           className={tool === "polygon" ? "bg-primary hover:bg-primary-hover" : ""}
         >
           <span className="sr-only">多边形</span>
-          <Polygon size={16} />
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 4l7 4v8l-7 4-7-4V8l7-4z" />
+          </svg>
         </Button>
         <Button
           size="icon"

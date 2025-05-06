@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { Rectangle, Polygon, CircleDot, Trash2, Plus } from "lucide-react";
+import { RectangleHorizontal, CircleDot, Trash2, Plus } from "lucide-react";
 import { Label as ImageLabel } from "@/hooks/useDummyData";
 
 interface LabelPanelProps {
@@ -41,9 +41,11 @@ const LabelPanel = ({
   const getTypeIcon = (type: string) => {
     switch (type) {
       case "rect":
-        return <Rectangle size={14} />;
+        return <RectangleHorizontal size={14} />;
       case "polygon":
-        return <Polygon size={14} />;
+        return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 4l7 4v8l-7 4-7-4V8l7-4z" />
+        </svg>;
       case "point":
         return <CircleDot size={14} />;
       default:
