@@ -5,7 +5,7 @@ import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/components/ui/use-toast";
 import { Search, Upload, Loader, CheckCircle, XCircle } from "lucide-react";
@@ -72,7 +72,7 @@ const DatasetsPage = () => {
     switch (status) {
       case 'running':
         return (
-          <div className="flex items-center">
+          <div className="flex items-center text-blue-600">
             <Loader size={16} className="mr-2 animate-spin" />
             <span>进行中</span>
           </div>
@@ -103,13 +103,14 @@ const DatasetsPage = () => {
         <div className="mb-6 flex justify-between items-center">
           <h1 className="text-2xl font-bold">数据集列表</h1>
           
+          <Button 
+            className="bg-primary hover:bg-primary-hover"
+            onClick={() => setShowNewDatasetDialog(true)}
+          >
+            <Upload size={16} className="mr-2" />
+            新建数据集
+          </Button>
           <Dialog open={showNewDatasetDialog} onOpenChange={setShowNewDatasetDialog}>
-            <DialogTrigger asChild>
-              <Button className="bg-primary hover:bg-primary-hover">
-                <Upload size={16} className="mr-2" />
-                新建数据集
-              </Button>
-            </DialogTrigger>
             <DialogContent>
               <NewDatasetDialog onSubmit={handleCreateDataset} onCancel={() => setShowNewDatasetDialog(false)} />
             </DialogContent>
