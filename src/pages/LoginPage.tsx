@@ -79,10 +79,10 @@ const LoginPage = () => {
             >
               {isSubmitting ? (
                 <>
-                  <span className="mr-2">发送中</span>
+                  <span className="mr-2">登录中</span>
                   <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                 </>
-              ) : "发送登录链接"}
+              ) : "登录"}
             </Button>
           </CardFooter>
         </form>

@@ -43,20 +43,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // 模拟API调用
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // 在真实环境中，这里应该调用后端API发送登录链接
-      // 为了演示，我们直接模拟一个成功的响应
+      // 直接模拟登录成功，无需等待magic link
+      const userData = { email, name: email.split('@')[0] };
+      setUser(userData);
+      localStorage.setItem("user", JSON.stringify(userData));
       
       toast({
-        title: "登录链接已发送",
-        description: `已向 ${email} 发送登录链接，请查收邮件。`,
+        title: "登录成功",
+        description: "已自动登录系统",
       });
-      
-      // 仅供演示：自动生成一个假的magic link并跳转
-      const fakeToken = btoa(email);
-      // 自动模拟用户点击了链接
-      setTimeout(() => {
-        window.location.href = `/?token=${fakeToken}`;
-      }, 2000);
     } catch (error) {
       toast({
         variant: "destructive",

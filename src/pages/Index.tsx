@@ -8,11 +8,16 @@ const Index = () => {
   const { isAuthenticated } = useAuth();
 
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate("/datasets");
-    } else {
-      navigate("/login");
-    }
+    // 短暂延迟以展示加载动画
+    const timer = setTimeout(() => {
+      if (isAuthenticated) {
+        navigate("/datasets");
+      } else {
+        navigate("/login");
+      }
+    }, 800);
+
+    return () => clearTimeout(timer);
   }, [isAuthenticated, navigate]);
 
   return (
