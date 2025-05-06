@@ -25,7 +25,7 @@ const AnnotationCanvas = ({
   onUpdateLabel,
   onDeleteLabel,
 }: AnnotationCanvasProps) => {
-  const [tool, setTool: any] = useState<"select" | "rect" | "polygon" | "point">("select");
+  const [tool, setTool] = useState<"select" | "rect" | "polygon" | "point">("select");
   const [selectedLabelId, setSelectedLabelId] = useState<string | null>(null);
   const [drawing, setDrawing] = useState(false);
   const [points, setPoints] = useState<number[]>([]);
@@ -420,7 +420,7 @@ const AnnotationCanvas = ({
         )}
       </div>
 
-      {/* 标注提示 */}
+      {/* 标注提�� */}
       {drawing && tool === "polygon" && (
         <div className="absolute top-16 left-1/2 transform -translate-x-1/2 z-10 bg-white shadow-md rounded-lg px-3 py-1 text-sm">
           单击添加点，双击完成
