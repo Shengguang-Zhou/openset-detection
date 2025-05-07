@@ -1,12 +1,12 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { RectangleHorizontal, Pencil } from "lucide-react";
+import { RectangleHorizontal, Pencil, Move } from "lucide-react";
 
 interface CanvasToolbarProps {
   isSelectMode: boolean;
-  tool: "select" | "rect" | "polygon" | "point";
-  setTool: (tool: "select" | "rect" | "polygon" | "point") => void;
+  tool: "select" | "rect" | "polygon" | "point" | "move";
+  setTool: (tool: "select" | "rect" | "polygon" | "point" | "move") => void;
   selectedLabelId: string | null;
   drawing: boolean;
   onDeleteSelected: () => void;
@@ -25,7 +25,7 @@ export function CanvasToolbar({
   return (
     <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10 bg-white shadow-md rounded-lg p-1 flex space-x-1">
       {isSelectMode ? (
-        <div className="flex items-center px-2 text-sm text-red-600 font-medium">
+        <div className="flex items-center px-2 text-sm text-primary font-medium">
           请框选图像区域作为参考
         </div>
       ) : (
@@ -34,7 +34,7 @@ export function CanvasToolbar({
             size="icon"
             variant={tool === "select" ? "default" : "outline"}
             onClick={() => setTool("select")}
-            className={tool === "select" ? "bg-primary hover:bg-primary-hover" : ""}
+            className={tool === "select" ? "bg-primary hover:bg-primary/90" : ""}
           >
             <span className="sr-only">选择</span>
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -45,7 +45,7 @@ export function CanvasToolbar({
             size="icon"
             variant={tool === "rect" ? "default" : "outline"}
             onClick={() => setTool("rect")}
-            className={tool === "rect" ? "bg-primary hover:bg-primary-hover" : ""}
+            className={tool === "rect" ? "bg-primary hover:bg-primary/90" : ""}
           >
             <span className="sr-only">矩形</span>
             <RectangleHorizontal size={16} />
@@ -54,7 +54,7 @@ export function CanvasToolbar({
             size="icon"
             variant={tool === "polygon" ? "default" : "outline"}
             onClick={() => setTool("polygon")}
-            className={tool === "polygon" ? "bg-primary hover:bg-primary-hover" : ""}
+            className={tool === "polygon" ? "bg-primary hover:bg-primary/90" : ""}
           >
             <span className="sr-only">多边形</span>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -65,10 +65,19 @@ export function CanvasToolbar({
             size="icon"
             variant={tool === "point" ? "default" : "outline"}
             onClick={() => setTool("point")}
-            className={tool === "point" ? "bg-primary hover:bg-primary-hover" : ""}
+            className={tool === "point" ? "bg-primary hover:bg-primary/90" : ""}
           >
             <span className="sr-only">点</span>
             <Pencil size={16} />
+          </Button>
+          <Button
+            size="icon"
+            variant={tool === "move" ? "default" : "outline"}
+            onClick={() => setTool("move")}
+            className={tool === "move" ? "bg-primary hover:bg-primary/90" : ""}
+          >
+            <span className="sr-only">移动</span>
+            <Move size={16} />
           </Button>
         </>
       )}

@@ -1,6 +1,6 @@
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "./ui/collapsible";
 
@@ -17,8 +17,31 @@ export function CollapsibleLayout({
   rightSidebar,
   collapsedLabels
 }: CollapsibleLayoutProps) {
+  // Initialize with right sidebar open, left sidebar closed on mobile
   const [isLeftCollapsed, setIsLeftCollapsed] = useState(false);
-  const [isRightCollapsed, setIsRightCollapsed] = useState(true);
+  const [isRightCollapsed, setIsRightCollapsed] = useState(false);
+  
+  // Check if we're on mobile and adjust sidebar states accordingly
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 768) {
+        setIsLeftCollapsed(true);
+        setIsRightCollapsed(true);
+      } else {
+        setIsLeftCollapsed(false);
+        setIsRightCollapsed(false);
+      }
+    };
+
+    // Set initial state
+    handleResize();
+
+    // Add event listener
+    window.addEventListener('resize', handleResize);
+    
+    // Clean up
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   
   return (
     <div className="flex h-full w-full">

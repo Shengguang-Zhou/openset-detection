@@ -4,8 +4,8 @@ import { useToast } from "@/components/ui/use-toast";
 
 interface CanvasInteractionsProps {
   isSelectMode: boolean;
-  tool: "select" | "rect" | "polygon" | "point";
-  setTool: (tool: "select" | "rect" | "polygon" | "point") => void;
+  tool: "select" | "rect" | "polygon" | "point" | "move";
+  setTool: (tool: "select" | "rect" | "polygon" | "point" | "move") => void;
   drawing: boolean;
   setDrawing: (drawing: boolean) => void;
   points: number[];
@@ -18,6 +18,7 @@ interface CanvasInteractionsProps {
   setSelectionBox: (box: { x: number; y: number; width: number; height: number } | null) => void;
   isDragging: boolean;
   setIsDragging: (dragging: boolean) => void;
+  isSpacePressed: boolean;
   onAddLabel: (label: any) => void;
   onLabelCreated: (labelType: string, coordinates: any) => void; // New callback
   onSelectRegion?: (region: { x: number; y: number; width: number; height: number }) => void;
@@ -39,12 +40,14 @@ export function useCanvasInteractions({
   setSelectionBox,
   isDragging,
   setIsDragging,
+  isSpacePressed,
   onAddLabel,
-  onLabelCreated, // New callback
+  onLabelCreated,
   onSelectRegion
 }: CanvasInteractionsProps) {
   const { toast } = useToast();
   const lastCoordinatesRef = useRef<any>(null);
+  const lastMousePositionRef = useRef<{x: number, y: number} | null>(null);
   
   // Handle mouse down event
   const handleMouseDown = useCallback((e: any, stageRef: any, imageRef: any, isImageLoaded: boolean) => {
@@ -55,8 +58,13 @@ export function useCanvasInteractions({
     const x = (pointerPos.x - position.x) / scale;
     const y = (pointerPos.y - position.y) / scale;
     
-    if (e.evt.button === 1) { // Middle mouse button for panning
+    // Store last mouse position for dragging
+    lastMousePositionRef.current = { x: pointerPos.x, y: pointerPos.y };
+    
+    // Enable drag mode with middle mouse button or if move tool is selected or space is pressed
+    if (e.evt.button === 1 || tool === "move" || isSpacePressed) {
       setIsDragging(true);
+      document.body.style.cursor = 'grabbing';
       return;
     }
     
@@ -90,7 +98,7 @@ export function useCanvasInteractions({
         setPoints([...points, x, y]);
       }
     }
-  }, [isSelectMode, tool, drawing, points, scale, position, onLabelCreated, setDrawing, setPoints, setSelectionBox, setIsDragging]);
+  }, [isSelectMode, tool, drawing, points, scale, position, isSpacePressed, onLabelCreated, setDrawing, setPoints, setSelectionBox, setIsDragging]);
 
   // Handle mouse move event
   const handleMouseMove = useCallback((e: any, stageRef: any, isImageLoaded: boolean) => {
@@ -100,11 +108,18 @@ export function useCanvasInteractions({
     const pointerPos = stage.getPointerPosition();
     
     if (isDragging) {
-      // Handle panning
-      setPosition({
-        x: position.x + e.evt.movementX,
-        y: position.y + e.evt.movementY
-      });
+      // Handle panning with move tool, middle mouse button or space key pressed
+      if (lastMousePositionRef.current) {
+        const dx = pointerPos.x - lastMousePositionRef.current.x;
+        const dy = pointerPos.y - lastMousePositionRef.current.y;
+        
+        setPosition({
+          x: position.x + dx,
+          y: position.y + dy
+        });
+        
+        lastMousePositionRef.current = { x: pointerPos.x, y: pointerPos.y };
+      }
       return;
     }
     
@@ -124,7 +139,7 @@ export function useCanvasInteractions({
       return;
     }
 
-    if (tool === "select") return;
+    if (tool === "select" || tool === "move") return;
 
     if (tool === "rect") {
       // Update rectangle endpoint
@@ -140,6 +155,8 @@ export function useCanvasInteractions({
   const handleMouseUp = useCallback((e: any, stageRef: any, imageRef: any, isImageLoaded: boolean) => {
     if (isDragging) {
       setIsDragging(false);
+      document.body.style.cursor = 'default';
+      lastMousePositionRef.current = null;
       return;
     }
     
@@ -168,7 +185,7 @@ export function useCanvasInteractions({
       return;
     }
 
-    if (tool === "select") return;
+    if (tool === "select" || tool === "move") return;
 
     if (tool === "rect") {
       const x1 = points[0];

@@ -1,13 +1,28 @@
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ZapIcon, Text, Image as ImageIcon, Upload } from "lucide-react";
+import {
+  ZapIcon,
+  Text,
+  Image as ImageIcon,
+  Upload,
+  ChevronDown,
+  Maximize2
+} from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 interface ImprovedPromptSidebarProps {
   promptMode: "free" | "text" | "image";
@@ -37,6 +52,9 @@ export function ImprovedPromptSidebar({
   onRunDetection
 }: ImprovedPromptSidebarProps) {
   const [activeTab, setActiveTab] = useState("usage");
+  const [modelValue, setModelValue] = useState("智拓标注 Pro");
+  const [showFullImageDialog, setShowFullImageDialog] = useState(false);
+  const canvasPreviewRef = useRef<HTMLDivElement>(null);
   
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -86,12 +104,16 @@ export function ImprovedPromptSidebar({
           <TabsContent value="usage" className="m-0 p-3 space-y-4">
             <div className="space-y-2">
               <Label className="font-medium">模型</Label>
-              <div className="border rounded-md p-2 flex items-center justify-between">
-                <span>智拓标注 Pro</span>
-                <svg width="12" height="12" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M3.13523 6.15803C3.3241 5.95657 3.64052 5.94637 3.84197 6.13523L7.5 9.56464L11.158 6.13523C11.3595 5.94637 11.6759 5.95657 11.8648 6.15803C12.0536 6.35949 12.0434 6.67591 11.842 6.86477L7.84197 10.6148C7.64964 10.7951 7.35036 10.7951 7.15803 10.6148L3.15803 6.86477C2.95657 6.67591 2.94637 6.35949 3.13523 6.15803Z" fill="currentColor"></path>
-                </svg>
-              </div>
+              <Select value={modelValue} onValueChange={setModelValue}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="选择模型" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="智拓标注 Pro">智拓标注 Pro</SelectItem>
+                  <SelectItem value="智拓标注 Max">智拓标注 Max</SelectItem>
+                  <SelectItem value="智拓标注 Ultra">智拓标注 Ultra</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             
             <div className="space-y-2">
@@ -162,6 +184,61 @@ export function ImprovedPromptSidebar({
                   </div>
                 </RadioGroup>
                 
+                {imagePromptMethod === "select" && (
+                  <div className="border rounded p-2 space-y-2">
+                    <p className="text-xs text-gray-500">
+                      请在画布上按住鼠标拖动创建橙色选择框作为参考区域
+                    </p>
+                    
+                    <div className="relative">
+                      <div 
+                        ref={canvasPreviewRef} 
+                        className="h-[120px] bg-gray-100 flex items-center justify-center overflow-hidden cursor-pointer"
+                        onClick={() => setShowFullImageDialog(true)}
+                      >
+                        {selectionBox ? (
+                          <div className="relative w-full h-full">
+                            <img 
+                              src="https://picsum.photos/800/600" 
+                              alt="当前图像" 
+                              className="w-full h-full object-cover"
+                            />
+                            <div 
+                              className="absolute border-2 border-primary bg-primary/10"
+                              style={{
+                                left: `${selectionBox.x * 100 / 800}%`, 
+                                top: `${selectionBox.y * 100 / 600}%`,
+                                width: `${selectionBox.width * 100 / 800}%`, 
+                                height: `${selectionBox.height * 100 / 600}%`
+                              }}
+                            ></div>
+                          </div>
+                        ) : (
+                          <>
+                            <ImageIcon className="h-6 w-6 text-gray-400" />
+                            <span className="text-xs text-gray-500 ml-2">请选择区域</span>
+                          </>
+                        )}
+                      </div>
+                      
+                      <Button 
+                        size="icon" 
+                        variant="outline" 
+                        className="absolute top-1 right-1 h-6 w-6 bg-white" 
+                        onClick={() => setShowFullImageDialog(true)}
+                      >
+                        <Maximize2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                    
+                    {selectionBox && (
+                      <div className="mt-2 text-xs text-primary">
+                        已选择区域：X:{selectionBox.x.toFixed(0)} Y:{selectionBox.y.toFixed(0)} 宽:{selectionBox.width.toFixed(0)} 高:{selectionBox.height.toFixed(0)}
+                      </div>
+                    )}
+                  </div>
+                )}
+                
                 {imagePromptMethod === "upload" && (
                   <div className="border-2 border-dashed border-gray-300 rounded-md p-4 text-center">
                     <input
@@ -191,19 +268,6 @@ export function ImprovedPromptSidebar({
                           </span>
                         </div>
                       </label>
-                    )}
-                  </div>
-                )}
-                
-                {imagePromptMethod === "select" && (
-                  <div className="border rounded p-2">
-                    <p className="text-xs text-gray-500">
-                      请在画布上按住鼠标拖动创建橙色选择框作为参考区域
-                    </p>
-                    {selectionBox && (
-                      <div className="mt-2 text-xs text-primary">
-                        已选择区域：X:{selectionBox.x.toFixed(0)} Y:{selectionBox.y.toFixed(0)} 宽:{selectionBox.width.toFixed(0)} 高:{selectionBox.height.toFixed(0)}
-                      </div>
                     )}
                   </div>
                 )}
@@ -257,6 +321,44 @@ export function ImprovedPromptSidebar({
           </TabsContent>
         </ScrollArea>
       </Tabs>
+
+      {/* Full-size image selection dialog */}
+      <Dialog open={showFullImageDialog} onOpenChange={setShowFullImageDialog}>
+        <DialogContent className="max-w-4xl p-0">
+          <div className="p-4 border-b">
+            <h2 className="font-medium">选择图像区域</h2>
+            <p className="text-sm text-gray-500">在图像上拖动鼠标选择目标区域</p>
+          </div>
+          <div className="p-4 flex items-center justify-center min-h-[400px]">
+            <div className="relative w-full h-[400px]">
+              <img 
+                src="https://picsum.photos/800/600" 
+                alt="当前图像" 
+                className="w-full h-full object-contain"
+              />
+              {selectionBox && (
+                <div 
+                  className="absolute border-2 border-primary bg-primary/10"
+                  style={{
+                    left: `${selectionBox.x}px`, 
+                    top: `${selectionBox.y}px`,
+                    width: `${selectionBox.width}px`, 
+                    height: `${selectionBox.height}px`
+                  }}
+                ></div>
+              )}
+            </div>
+          </div>
+          <div className="p-4 border-t flex justify-between">
+            <Button variant="outline" onClick={() => setShowFullImageDialog(false)}>
+              取消
+            </Button>
+            <Button onClick={() => setShowFullImageDialog(false)}>
+              确认选择
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

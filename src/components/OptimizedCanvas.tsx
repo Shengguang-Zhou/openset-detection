@@ -44,6 +44,7 @@ export const OptimizedCanvas = memo(({
 }: OptimizedCanvasProps) => {
   const {
     tool, setTool,
+    lastUsedTool,
     selectedLabelId, setSelectedLabelId,
     drawing, setDrawing,
     points, setPoints,
@@ -53,6 +54,7 @@ export const OptimizedCanvas = memo(({
     isImageLoaded, setIsImageLoaded,
     selectionBox, setSelectionBox,
     isDragging, setIsDragging,
+    isSpacePressed,
     handleZoomIn, handleZoomOut, handleResetZoom, handleCancelDrawing
   } = useCanvasState();
   
@@ -81,14 +83,21 @@ export const OptimizedCanvas = memo(({
   const handleLabelSelected = useCallback((category: string) => {
     if (!pendingLabel) return;
     
-    onAddLabel({
+    const newLabel = {
       category,
       type: pendingLabel.type as "rect" | "polygon" | "point",
       coordinates: pendingLabel.coordinates,
+    };
+    
+    onAddLabel(newLabel);
+    
+    toast({
+      title: "标签已添加",
+      description: `已成功添加「${category}」标签`,
     });
     
     setPendingLabel(null);
-  }, [pendingLabel, onAddLabel]);
+  }, [pendingLabel, onAddLabel, toast]);
 
   // Canvas interactions
   const {
@@ -113,6 +122,7 @@ export const OptimizedCanvas = memo(({
     setSelectionBox,
     isDragging,
     setIsDragging,
+    isSpacePressed,
     onAddLabel,
     onLabelCreated: handleLabelCreated,
     onSelectRegion
@@ -237,12 +247,23 @@ export const OptimizedCanvas = memo(({
     isImageLoaded
   ]);
 
+  // Set cursor based on tool and state
+  useEffect(() => {
+    if (isDragging) {
+      document.body.style.cursor = 'grabbing';
+    } else if (tool === "move" || isSpacePressed) {
+      document.body.style.cursor = 'grab';
+    } else {
+      document.body.style.cursor = 'default';
+    }
+  }, [tool, isDragging, isSpacePressed]);
+
   return (
     <div className="w-full h-full relative" ref={containerRef}>
       {/* Toolbar */}
       <CanvasToolbar 
         isSelectMode={isSelectMode}
-        tool={tool}
+        tool={isSpacePressed ? "move" : tool}
         setTool={setTool}
         selectedLabelId={selectedLabelId}
         drawing={drawing}
@@ -254,6 +275,13 @@ export const OptimizedCanvas = memo(({
       {drawing && tool === "polygon" && !isSelectMode && (
         <div className="absolute top-16 left-1/2 transform -translate-x-1/2 z-10 bg-white shadow-md rounded-lg px-3 py-1 text-sm">
           单击添加点，双击完成
+        </div>
+      )}
+      
+      {/* Space key tip */}
+      {isSpacePressed && (
+        <div className="absolute top-16 left-1/2 transform -translate-x-1/2 z-10 bg-white shadow-md rounded-lg px-3 py-1 text-sm">
+          空格键移动模式
         </div>
       )}
 
@@ -315,16 +343,14 @@ export const OptimizedCanvas = memo(({
           </div>
         </div>
       )}
-      
-      {/* Dragging cursor indicator */}
-      {isDragging && (
-        <div className="absolute inset-0 cursor-grabbing z-20 pointer-events-none" />
-      )}
 
       {/* Label selection dialog */}
       <LabelSelectionDialog
         isOpen={isLabelDialogOpen}
-        onClose={() => setIsLabelDialogOpen(false)}
+        onClose={() => {
+          setIsLabelDialogOpen(false);
+          setPendingLabel(null);
+        }}
         onSelectLabel={handleLabelSelected}
         existingLabels={categories}
       />

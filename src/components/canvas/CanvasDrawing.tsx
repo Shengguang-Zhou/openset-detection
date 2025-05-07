@@ -5,7 +5,7 @@ import { Circle, Line, Rect } from "react-konva";
 interface CanvasDrawingProps {
   drawing: boolean;
   isSelectMode: boolean;
-  tool: "select" | "rect" | "polygon" | "point";
+  tool: "select" | "rect" | "polygon" | "point" | "move";
   points: number[];
   selectionBox: { x: number; y: number; width: number; height: number } | null;
 }

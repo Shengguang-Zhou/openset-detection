@@ -5,6 +5,13 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ZapIcon, Text, Image as ImageIcon, Upload } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface PromptModeSidebarProps {
   promptMode: "free" | "text" | "image";
@@ -33,6 +40,8 @@ const PromptModeSidebar = ({
   isRunningDetection,
   onRunDetection
 }: PromptModeSidebarProps) => {
+  const [modelValue, setModelValue] = useState("智拓标注 Pro");
+  
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
@@ -50,25 +59,39 @@ const PromptModeSidebar = ({
     <div className="col-span-2 bg-white rounded-lg border overflow-hidden flex flex-col">
       <div className="p-3 border-b font-medium">检测模式</div>
       <div className="p-3 space-y-3">
+        <div className="space-y-2">
+          <Label className="font-medium">模型</Label>
+          <Select value={modelValue} onValueChange={setModelValue}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="选择模型" />
+            </SelectTrigger>
+            <SelectContent className="bg-white">
+              <SelectItem value="智拓标注 Pro">智拓标注 Pro</SelectItem>
+              <SelectItem value="智拓标注 Max">智拓标注 Max</SelectItem>
+              <SelectItem value="智拓标注 Ultra">智拓标注 Ultra</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        
         <RadioGroup value={promptMode} onValueChange={(value) => setPromptMode(value as "free" | "text" | "image")}>
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="free" id="free" />
             <Label htmlFor="free" className="flex items-center">
-              <ZapIcon className="mr-2 h-4 w-4" />
+              <ZapIcon className="mr-2 h-4 w-4 text-primary" />
               无提示模式
             </Label>
           </div>
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="text" id="text" />
             <Label htmlFor="text" className="flex items-center">
-              <Text className="mr-2 h-4 w-4" />
+              <Text className="mr-2 h-4 w-4 text-primary" />
               文本提示模式
             </Label>
           </div>
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="image" id="image" />
             <Label htmlFor="image" className="flex items-center">
-              <ImageIcon className="mr-2 h-4 w-4" />
+              <ImageIcon className="mr-2 h-4 w-4 text-primary" />
               图像提示模式
             </Label>
           </div>
@@ -86,7 +109,7 @@ const PromptModeSidebar = ({
             />
             <Button 
               size="sm" 
-              className="w-full mt-2" 
+              className="w-full mt-2 bg-primary hover:bg-primary-hover" 
               onClick={onRunDetection}
               disabled={textPrompt.trim() === '' || isRunningDetection}
             >
@@ -133,7 +156,11 @@ const PromptModeSidebar = ({
                       alt="参考图像" 
                       className="max-w-full h-auto max-h-[150px] mx-auto"
                     />
-                    <Button size="sm" variant="outline" onClick={() => setReferenceImage(null)}>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={() => setReferenceImage(null)}
+                    >
                       移除图像
                     </Button>
                   </div>
@@ -156,7 +183,7 @@ const PromptModeSidebar = ({
                   请在画布上按住鼠标拖动创建红色选择框作为参考区域
                 </p>
                 {selectionBox && (
-                  <div className="mt-2 text-xs text-blue-600">
+                  <div className="mt-2 text-xs text-primary">
                     已选择区域：X:{selectionBox.x.toFixed(0)} Y:{selectionBox.y.toFixed(0)} 宽:{selectionBox.width.toFixed(0)} 高:{selectionBox.height.toFixed(0)}
                   </div>
                 )}
@@ -165,7 +192,7 @@ const PromptModeSidebar = ({
             
             <Button 
               size="sm" 
-              className="w-full" 
+              className="w-full bg-primary hover:bg-primary-hover" 
               disabled={(imagePromptMethod === "upload" && !referenceImage) || 
                       (imagePromptMethod === "select" && !selectionBox) ||
                       isRunningDetection}
@@ -184,7 +211,7 @@ const PromptModeSidebar = ({
         {promptMode === "free" && (
           <Button 
             size="sm" 
-            className="w-full mt-4" 
+            className="w-full mt-4 bg-primary hover:bg-primary-hover" 
             onClick={onRunDetection}
             disabled={isRunningDetection}
           >

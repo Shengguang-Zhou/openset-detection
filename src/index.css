@@ -100,3 +100,67 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Custom styling for select dropdown */
+.model-select {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+}
+
+.model-select-content {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  border-radius: 4px;
+  overflow: hidden;
+  z-index: 50;
+}
+
+.model-select-item {
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.model-select-item:hover {
+  background-color: #f5f5f5;
+}
+
+/* Override primary color styles to ensure consistency */
+.bg-primary-hover {
+  background-color: #e66000;
+}
+
+.text-primary {
+  color: #F97316;
+}
+
+.border-primary {
+  border-color: #F97316;
+}
+
+/* Space key hint styles */
+.space-key-hint {
+  background-color: rgba(255,255,255,0.8);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Canvas cursor styles */
+.cursor-grab {
+  cursor: grab;
+}
+
+.cursor-grabbing {
+  cursor: grabbing;
+}
+
+/* Fix for select dropdown z-index and background */
+.selectContent {
+  background-color: white;
+  z-index: 50;
+}
