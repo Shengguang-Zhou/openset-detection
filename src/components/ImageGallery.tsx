@@ -18,14 +18,14 @@ interface ImageGalleryProps {
 const ImageGallery = ({ images, selectedIndex, onSelect }: ImageGalleryProps) => {
   if (images.length === 0) {
     return (
-      <div className="col-span-4 p-4 text-center text-gray-500">
+      <div className="p-4 text-center text-gray-500">
         当前数据集没有图像
       </div>
     );
   }
 
   return (
-    <>
+    <div className="grid grid-cols-8 gap-1">
       {images.map((image, index) => (
         <div
           key={image.id}
@@ -62,13 +62,13 @@ const ImageGallery = ({ images, selectedIndex, onSelect }: ImageGalleryProps) =>
             <div className="absolute inset-0 bg-primary/10 border border-primary rounded"></div>
           )}
           
-          {/* File name tooltip on hover */}
+          {/* File name tooltip - simplified for grid view */}
           <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-1 truncate">
-            {image.fileName}
+            {image.fileName.length > 8 ? `${image.fileName.substring(0, 8)}...` : image.fileName}
           </div>
         </div>
       ))}
-    </>
+    </div>
   );
 };
 

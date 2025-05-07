@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 
 const DatasetDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -36,9 +38,12 @@ const DatasetDetailPage = () => {
   const [showExportDialog, setShowExportDialog] = useState(false);
   const [activeRightPanel, setActiveRightPanel] = useState<"labels" | "ai">("labels");
   const [filter, setFilter] = useState<"all" | "unknown" | "clean">("all");
-  const [promptMode, setPromptMode] = useState<"text" | "image" | "free">("free");
+  const [promptMode, setPromptMode] = useState<"free" | "text" | "image">("free");
   const [textPrompt, setTextPrompt] = useState("");
   const [referenceImage, setReferenceImage] = useState<string | null>(null);
+  const [imagePromptMethod, setImagePromptMethod] = useState<"upload" | "select">("upload");
+  const [isRunningDetection, setIsRunningDetection] = useState(false);
+  const [selectionBox, setSelectionBox] = useState<{x: number, y: number, width: number, height: number} | null>(null);
 
   if (!id) {
     navigate("/datasets");
@@ -59,11 +64,19 @@ const DatasetDetailPage = () => {
   const handleRunOsd = () => {
     if (!dataset) return;
     
-    runOsd(id);
-    toast({
-      title: "开集目标检测已启动",
-      description: "任务正在后台运行，请稍候...",
-    });
+    // Set loading state
+    setIsRunningDetection(true);
+    
+    // Simulate API call with timeout
+    setTimeout(() => {
+      runOsd(id);
+      setIsRunningDetection(false);
+      
+      toast({
+        title: "开集目标检测已完成",
+        description: "检测结果已更新",
+      });
+    }, 2000);
   };
 
   const handleExport = (options: { includeUnknown: boolean; format: string }) => {
@@ -121,6 +134,39 @@ const DatasetDetailPage = () => {
     }
   };
 
+  const handleRunDetection = () => {
+    setIsRunningDetection(true);
+    
+    // Simulate API call with timeout
+    setTimeout(() => {
+      // Add a fake detected label based on the prompt mode
+      if (selectedImage) {
+        const newLabel = {
+          id: `label-auto-${Date.now()}`,
+          category: promptMode === "text" ? "文本检测" : promptMode === "image" ? "图像匹配" : "自动检测",
+          type: "rect",
+          coordinates: [
+            [50, 50],
+            [200, 200]
+          ],
+          isAiSuggestion: true,
+          confidence: 0.85
+        };
+        
+        // Add the new label to the selected image
+        updateImageLabel(id, selectedImage.id, newLabel.id, newLabel);
+      }
+      
+      setIsRunningDetection(false);
+      
+      toast({
+        title: "检测完成",
+        description: promptMode === "free" ? "自动检测已完成" : 
+                    promptMode === "text" ? "基于文本提示的检测已完成" : "基于图像的检测已完成",
+      });
+    }, 2000);
+  };
+
   if (!dataset) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -160,11 +206,20 @@ const DatasetDetailPage = () => {
             <Button
               variant="outline"
               onClick={() => handleRunOsd()}
-              disabled={dataset.osdStatus === 'running'}
+              disabled={dataset.osdStatus === 'running' || isRunningDetection}
               className={dataset.osdStatus === 'done' ? "bg-blue-50 text-accent border-accent hover:bg-blue-100" : ""}
             >
-              <ZapIcon className="mr-1 h-4 w-4" />
-              {dataset.osdStatus === 'running' ? "OSD运行中..." : dataset.osdStatus === 'done' ? "OSD已完成" : "运行开集检测"}
+              {(dataset.osdStatus === 'running' || isRunningDetection) ? (
+                <>
+                  <div className="h-4 w-4 mr-1 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                  OSD运行中...
+                </>
+              ) : (
+                <>
+                  <ZapIcon className="mr-1 h-4 w-4" />
+                  {dataset.osdStatus === 'done' ? "OSD已完成" : "运行开集检测"}
+                </>
+              )}
             </Button>
             
             <Button 
@@ -182,30 +237,29 @@ const DatasetDetailPage = () => {
           <div className="col-span-2 bg-white rounded-lg border overflow-hidden flex flex-col">
             <div className="p-3 border-b font-medium">检测模式</div>
             <div className="p-3 space-y-3">
-              <Button 
-                variant={promptMode === "free" ? "default" : "outline"} 
-                className="w-full justify-start"
-                onClick={() => setPromptMode("free")}
-              >
-                <ZapIcon className="mr-2 h-4 w-4" />
-                无提示模式
-              </Button>
-              <Button 
-                variant={promptMode === "text" ? "default" : "outline"} 
-                className="w-full justify-start"
-                onClick={() => setPromptMode("text")}
-              >
-                <Text className="mr-2 h-4 w-4" />
-                文本提示模式
-              </Button>
-              <Button 
-                variant={promptMode === "image" ? "default" : "outline"} 
-                className="w-full justify-start"
-                onClick={() => setPromptMode("image")}
-              >
-                <ImageIcon className="mr-2 h-4 w-4" />
-                图像提示模式
-              </Button>
+              <RadioGroup value={promptMode} onValueChange={(value) => setPromptMode(value as "free" | "text" | "image")}>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="free" id="free" />
+                  <Label htmlFor="free" className="flex items-center">
+                    <ZapIcon className="mr-2 h-4 w-4" />
+                    无提示模式
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="text" id="text" />
+                  <Label htmlFor="text" className="flex items-center">
+                    <Text className="mr-2 h-4 w-4" />
+                    文本提示模式
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="image" id="image" />
+                  <Label htmlFor="image" className="flex items-center">
+                    <ImageIcon className="mr-2 h-4 w-4" />
+                    图像提示模式
+                  </Label>
+                </div>
+              </RadioGroup>
 
               {/* 根据不同模式显示不同的提示输入区域 */}
               {promptMode === "text" && (
@@ -217,52 +271,117 @@ const DatasetDetailPage = () => {
                     onChange={(e) => setTextPrompt(e.target.value)}
                     className="min-h-[100px]"
                   />
-                  <Button size="sm" className="w-full mt-2">
-                    运行检测
+                  <Button 
+                    size="sm" 
+                    className="w-full mt-2" 
+                    onClick={handleRunDetection}
+                    disabled={textPrompt.trim() === '' || isRunningDetection}
+                  >
+                    {isRunningDetection ? (
+                      <>
+                        <div className="h-4 w-4 mr-1 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                        检测中...
+                      </>
+                    ) : "运行检测"}
                   </Button>
                 </div>
               )}
 
               {promptMode === "image" && (
                 <div className="mt-4 space-y-3">
-                  <label className="text-sm font-medium">上传参考图像</label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-md p-4 text-center">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      className="hidden"
-                      id="image-upload"
-                    />
-                    {referenceImage ? (
-                      <div className="space-y-2">
-                        <img 
-                          src={referenceImage} 
-                          alt="参考图像" 
-                          className="max-w-full h-auto max-h-[150px] mx-auto"
-                        />
-                        <Button size="sm" variant="outline" onClick={() => setReferenceImage(null)}>
-                          移除图像
-                        </Button>
-                      </div>
-                    ) : (
-                      <label htmlFor="image-upload" className="cursor-pointer">
-                        <div className="flex flex-col items-center">
-                          <Upload className="h-10 w-10 text-gray-400" />
-                          <span className="mt-2 text-sm text-gray-500">
-                            点击上传图像
-                          </span>
+                  <RadioGroup 
+                    value={imagePromptMethod} 
+                    onValueChange={(v) => setImagePromptMethod(v as "upload" | "select")}
+                    className="flex flex-col space-y-1"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="upload" id="upload" />
+                      <Label htmlFor="upload">上传参考图像</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="select" id="select" />
+                      <Label htmlFor="select">从画布选择区域</Label>
+                    </div>
+                  </RadioGroup>
+                  
+                  {imagePromptMethod === "upload" && (
+                    <div className="border-2 border-dashed border-gray-300 rounded-md p-4 text-center">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="hidden"
+                        id="image-upload"
+                      />
+                      {referenceImage ? (
+                        <div className="space-y-2">
+                          <img 
+                            src={referenceImage} 
+                            alt="参考图像" 
+                            className="max-w-full h-auto max-h-[150px] mx-auto"
+                          />
+                          <Button size="sm" variant="outline" onClick={() => setReferenceImage(null)}>
+                            移除图像
+                          </Button>
                         </div>
-                      </label>
-                    )}
-                  </div>
+                      ) : (
+                        <label htmlFor="image-upload" className="cursor-pointer">
+                          <div className="flex flex-col items-center">
+                            <Upload className="h-10 w-10 text-gray-400" />
+                            <span className="mt-2 text-sm text-gray-500">
+                              点击上传图像
+                            </span>
+                          </div>
+                        </label>
+                      )}
+                    </div>
+                  )}
                   
-                  <p className="text-xs text-gray-500">或在画布上选择区域</p>
+                  {imagePromptMethod === "select" && (
+                    <div className="border rounded p-2">
+                      <p className="text-xs text-gray-500">
+                        请在画布上按住鼠标拖动创建红色选择框作为参考区域
+                      </p>
+                      {selectionBox && (
+                        <div className="mt-2 text-xs text-blue-600">
+                          已选择区域：X:{selectionBox.x.toFixed(0)} Y:{selectionBox.y.toFixed(0)} 宽:{selectionBox.width.toFixed(0)} 高:{selectionBox.height.toFixed(0)}
+                        </div>
+                      )}
+                    </div>
+                  )}
                   
-                  <Button size="sm" className="w-full" disabled={!referenceImage}>
-                    运行检测
+                  <Button 
+                    size="sm" 
+                    className="w-full" 
+                    disabled={(imagePromptMethod === "upload" && !referenceImage) || 
+                             (imagePromptMethod === "select" && !selectionBox) ||
+                             isRunningDetection}
+                    onClick={handleRunDetection}
+                  >
+                    {isRunningDetection ? (
+                      <>
+                        <div className="h-4 w-4 mr-1 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                        检测中...
+                      </>
+                    ) : "运行检测"}
                   </Button>
                 </div>
+              )}
+              
+              {promptMode === "free" && (
+                <Button 
+                  size="sm" 
+                  className="w-full mt-4" 
+                  onClick={handleRunDetection}
+                  disabled={isRunningDetection}
+                >
+                  {isRunningDetection ? (
+                    <>
+                      <div className="h-4 w-4 mr-1 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                      检测中...
+                    </>
+                  ) : "运行检测"}
+                </Button>
               )}
             </div>
           </div>
@@ -295,26 +414,12 @@ const DatasetDetailPage = () => {
                   onAddLabel={handleAddLabel}
                   onUpdateLabel={handleLabelChange}
                   onDeleteLabel={handleLabelDelete}
+                  isSelectMode={imagePromptMethod === "select" && promptMode === "image"}
+                  onSelectRegion={(region) => setSelectionBox(region)}
                 />
               ) : (
                 <div className="text-gray-500">请选择一张图像以开始标注</div>
               )}
-            </div>
-            
-            <div className="p-2 border-t flex items-center justify-between text-sm">
-              <div className="flex items-center gap-4">
-                <div>
-                  <Button size="sm" variant="outline" className="h-8 w-8 p-0">-</Button>
-                  <span className="mx-2">100%</span>
-                  <Button size="sm" variant="outline" className="h-8 w-8 p-0">+</Button>
-                </div>
-                
-                <button className="text-blue-600 hover:underline">显示快捷键</button>
-              </div>
-              
-              <div className="text-gray-500">
-                {selectedImageIndex + 1} / {filteredImages.length}
-              </div>
             </div>
           </div>
           
@@ -324,7 +429,7 @@ const DatasetDetailPage = () => {
             <div className="bg-white rounded-lg border overflow-hidden h-[45%]">
               <div className="p-3 border-b font-medium">图像画廊</div>
               <ScrollArea className="h-[calc(100%-40px)]">
-                <div className="grid grid-cols-4 gap-1 p-2">
+                <div className="p-2">
                   <ImageGallery 
                     images={filteredImages}
                     selectedIndex={selectedImageIndex}

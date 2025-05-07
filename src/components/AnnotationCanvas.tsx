@@ -18,6 +18,8 @@ interface AnnotationCanvasProps {
   onAddLabel: (label: Omit<Label, "id">) => void;
   onUpdateLabel: (id: string, label: Partial<Label>) => void;
   onDeleteLabel: (id: string) => void;
+  isSelectMode?: boolean;
+  onSelectRegion?: (region: {x: number, y: number, width: number, height: number}) => void;
 }
 
 const AnnotationCanvas = ({
@@ -25,6 +27,8 @@ const AnnotationCanvas = ({
   onAddLabel,
   onUpdateLabel,
   onDeleteLabel,
+  isSelectMode = false,
+  onSelectRegion
 }: AnnotationCanvasProps) => {
   const [tool, setTool] = useState<"select" | "rect" | "polygon" | "point">("select");
   const [selectedLabelId, setSelectedLabelId] = useState<string | null>(null);
@@ -34,10 +38,18 @@ const AnnotationCanvas = ({
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [stageSize, setStageSize] = useState({ width: 800, height: 600 });
   const [isImageLoaded, setIsImageLoaded] = useState(false);
+  const [selectionBox, setSelectionBox] = useState<{x: number, y: number, width: number, height: number} | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<any>(null);
   const imageRef = useRef<HTMLImageElement>(new Image());
   const { toast } = useToast();
+
+  // Reset selection box when leaving selection mode
+  useEffect(() => {
+    if (!isSelectMode) {
+      setSelectionBox(null);
+    }
+  }, [isSelectMode]);
 
   // 调整画布大小以适应容器
   useEffect(() => {
@@ -88,12 +100,26 @@ const AnnotationCanvas = ({
 
   // 处理鼠标按下事件
   const handleMouseDown = (e: any) => {
-    if (tool === "select" || !isImageLoaded) return;
-
+    if (!isImageLoaded) return;
+    
     const stage = stageRef.current;
     const pointerPos = stage.getPointerPosition();
     const x = (pointerPos.x - position.x) / scale;
     const y = (pointerPos.y - position.y) / scale;
+    
+    if (isSelectMode) {
+      // In selection mode for reference image
+      setSelectionBox({
+        x: x,
+        y: y,
+        width: 0,
+        height: 0
+      });
+      setDrawing(true);
+      return;
+    }
+
+    if (tool === "select") return;
 
     if (tool === "rect" && !drawing) {
       setDrawing(true);
@@ -119,12 +145,25 @@ const AnnotationCanvas = ({
 
   // 处理鼠标移动事件
   const handleMouseMove = (e: any) => {
-    if (!drawing || tool === "select" || !isImageLoaded) return;
+    if (!isImageLoaded || !drawing) return;
 
     const stage = stageRef.current;
     const pointerPos = stage.getPointerPosition();
     const x = (pointerPos.x - position.x) / scale;
     const y = (pointerPos.y - position.y) / scale;
+
+    if (isSelectMode && selectionBox) {
+      // Update selection box for reference image
+      setSelectionBox({
+        x: selectionBox.x,
+        y: selectionBox.y,
+        width: x - selectionBox.x,
+        height: y - selectionBox.y
+      });
+      return;
+    }
+
+    if (tool === "select") return;
 
     if (tool === "rect") {
       // 更新矩形终点
@@ -138,7 +177,32 @@ const AnnotationCanvas = ({
 
   // 处理鼠标抬起事件
   const handleMouseUp = (e: any) => {
-    if (!drawing || tool === "select" || !isImageLoaded) return;
+    if (!isImageLoaded || !drawing) return;
+
+    if (isSelectMode && selectionBox) {
+      // Finalize selection box for reference image
+      const finalBox = {
+        x: Math.min(selectionBox.x, selectionBox.x + selectionBox.width),
+        y: Math.min(selectionBox.y, selectionBox.y + selectionBox.height),
+        width: Math.abs(selectionBox.width),
+        height: Math.abs(selectionBox.height)
+      };
+      
+      // Only use the selection if it has a reasonable size
+      if (finalBox.width > 10 && finalBox.height > 10) {
+        setSelectionBox(finalBox);
+        if (onSelectRegion) {
+          onSelectRegion(finalBox);
+        }
+      } else {
+        setSelectionBox(null);
+      }
+      
+      setDrawing(false);
+      return;
+    }
+
+    if (tool === "select") return;
 
     if (tool === "rect") {
       const x1 = points[0];
@@ -187,6 +251,7 @@ const AnnotationCanvas = ({
 
   // 处理标签选择
   const handleLabelSelect = (labelId: string) => {
+    if (isSelectMode) return; // Disable selection in selection mode
     setSelectedLabelId(selectedLabelId === labelId ? null : labelId);
   };
 
@@ -202,7 +267,12 @@ const AnnotationCanvas = ({
   const handleCancelDrawing = () => {
     setDrawing(false);
     setPoints([]);
-    setTool("select");
+    
+    if (isSelectMode) {
+      setSelectionBox(null);
+    } else {
+      setTool("select");
+    }
   };
 
   // 渲染标签
@@ -307,7 +377,25 @@ const AnnotationCanvas = ({
 
   // 渲染当前绘制的形状
   const renderDrawing = () => {
-    if (!drawing || points.length === 0) return null;
+    if (!drawing) return null;
+
+    if (isSelectMode && selectionBox) {
+      // Render the selection rectangle for reference image
+      return (
+        <Rect
+          x={Math.min(selectionBox.x, selectionBox.x + selectionBox.width)}
+          y={Math.min(selectionBox.y, selectionBox.y + selectionBox.height)}
+          width={Math.abs(selectionBox.width)}
+          height={Math.abs(selectionBox.height)}
+          stroke="#F42A35"
+          strokeWidth={2.5}
+          dash={[5, 2]}
+          fill="rgba(244, 42, 53, 0.1)"
+        />
+      );
+    }
+
+    if (points.length === 0) return null;
 
     if (tool === "rect" && points.length === 4) {
       const x1 = points[0];
@@ -342,52 +430,82 @@ const AnnotationCanvas = ({
     return null;
   };
 
+  const handleZoomIn = () => {
+    setScale(scale * 1.2);
+  };
+
+  const handleZoomOut = () => {
+    setScale(scale / 1.2);
+  };
+
+  const handleResetZoom = () => {
+    if (stageSize.width && stageSize.height && imageRef.current) {
+      const scaleX = stageSize.width / imageRef.current.width;
+      const scaleY = stageSize.height / imageRef.current.height;
+      const newScale = Math.min(scaleX, scaleY) * 0.9;
+      
+      setScale(newScale);
+      setPosition({
+        x: (stageSize.width - imageRef.current.width * newScale) / 2,
+        y: (stageSize.height - imageRef.current.height * newScale) / 2,
+      });
+    }
+  };
+
   return (
     <div className="w-full h-full relative" ref={containerRef}>
       {/* 工具栏 */}
       <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10 bg-white shadow-md rounded-lg p-1 flex space-x-1">
-        <Button
-          size="icon"
-          variant={tool === "select" ? "default" : "outline"}
-          onClick={() => setTool("select")}
-          className={tool === "select" ? "bg-primary hover:bg-primary-hover" : ""}
-        >
-          <span className="sr-only">选择</span>
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
-          </svg>
-        </Button>
-        <Button
-          size="icon"
-          variant={tool === "rect" ? "default" : "outline"}
-          onClick={() => setTool("rect")}
-          className={tool === "rect" ? "bg-primary hover:bg-primary-hover" : ""}
-        >
-          <span className="sr-only">矩形</span>
-          <RectangleHorizontal size={16} />
-        </Button>
-        <Button
-          size="icon"
-          variant={tool === "polygon" ? "default" : "outline"}
-          onClick={() => setTool("polygon")}
-          className={tool === "polygon" ? "bg-primary hover:bg-primary-hover" : ""}
-        >
-          <span className="sr-only">多边形</span>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 4l7 4v8l-7 4-7-4V8l7-4z" />
-          </svg>
-        </Button>
-        <Button
-          size="icon"
-          variant={tool === "point" ? "default" : "outline"}
-          onClick={() => setTool("point")}
-          className={tool === "point" ? "bg-primary hover:bg-primary-hover" : ""}
-        >
-          <span className="sr-only">点</span>
-          <Pencil size={16} />
-        </Button>
+        {isSelectMode ? (
+          <div className="flex items-center px-2 text-sm text-red-600 font-medium">
+            请框选图像区域作为参考
+          </div>
+        ) : (
+          <>
+            <Button
+              size="icon"
+              variant={tool === "select" ? "default" : "outline"}
+              onClick={() => setTool("select")}
+              className={tool === "select" ? "bg-primary hover:bg-primary-hover" : ""}
+            >
+              <span className="sr-only">选择</span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+              </svg>
+            </Button>
+            <Button
+              size="icon"
+              variant={tool === "rect" ? "default" : "outline"}
+              onClick={() => setTool("rect")}
+              className={tool === "rect" ? "bg-primary hover:bg-primary-hover" : ""}
+            >
+              <span className="sr-only">矩形</span>
+              <RectangleHorizontal size={16} />
+            </Button>
+            <Button
+              size="icon"
+              variant={tool === "polygon" ? "default" : "outline"}
+              onClick={() => setTool("polygon")}
+              className={tool === "polygon" ? "bg-primary hover:bg-primary-hover" : ""}
+            >
+              <span className="sr-only">多边形</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 4l7 4v8l-7 4-7-4V8l7-4z" />
+              </svg>
+            </Button>
+            <Button
+              size="icon"
+              variant={tool === "point" ? "default" : "outline"}
+              onClick={() => setTool("point")}
+              className={tool === "point" ? "bg-primary hover:bg-primary-hover" : ""}
+            >
+              <span className="sr-only">点</span>
+              <Pencil size={16} />
+            </Button>
+          </>
+        )}
         
-        {selectedLabelId && (
+        {selectedLabelId && !isSelectMode && (
           <Button
             size="icon"
             variant="outline"
@@ -422,7 +540,7 @@ const AnnotationCanvas = ({
       </div>
 
       {/* 标注提示 */}
-      {drawing && tool === "polygon" && (
+      {drawing && tool === "polygon" && !isSelectMode && (
         <div className="absolute top-16 left-1/2 transform -translate-x-1/2 z-10 bg-white shadow-md rounded-lg px-3 py-1 text-sm">
           单击添加点，双击完成
         </div>
@@ -460,6 +578,26 @@ const AnnotationCanvas = ({
           {renderDrawing()}
         </Layer>
       </Stage>
+
+      {/* 缩放控制 */}
+      <div className="absolute bottom-4 left-4 z-10 bg-white shadow-md rounded-lg p-1 flex items-center">
+        <Button size="icon" variant="outline" onClick={handleZoomOut} className="h-8 w-8 p-0">
+          <span className="sr-only">缩小</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+        </Button>
+        <Button size="sm" variant="ghost" onClick={handleResetZoom} className="px-2 mx-1 text-xs">
+          {Math.round(scale * 100)}%
+        </Button>
+        <Button size="icon" variant="outline" onClick={handleZoomIn} className="h-8 w-8 p-0">
+          <span className="sr-only">放大</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+        </Button>
+      </div>
 
       {/* 加载指示器 */}
       {!isImageLoaded && (
