@@ -250,18 +250,20 @@ const LabelDetail = ({
   onDeleteLabel: (id: string) => void;
   isHighlighted: boolean;
 }) => {
-  // Format coordinates string based on label type
+  // Format coordinates string based on label type in x,y,w,h format
   const getCoordinateString = (label: ImageLabel) => {
     if (label.type === "rect") {
       const [topLeft, bottomRight] = label.coordinates;
+      const x = Math.round(Math.min(topLeft[0], bottomRight[0]));
+      const y = Math.round(Math.min(topLeft[1], bottomRight[1]));
       const width = Math.round(Math.abs(bottomRight[0] - topLeft[0]));
       const height = Math.round(Math.abs(bottomRight[1] - topLeft[1]));
-      return `位置: ${Math.round(topLeft[0])},${Math.round(topLeft[1])}, 尺寸: ${width}×${height}`;
+      return `X:${x} Y:${y} W:${width} H:${height}`;
     } else if (label.type === "polygon") {
       return `多边形: ${label.coordinates.length} 点`;
     } else {
       const [point] = label.coordinates;
-      return `位置: ${Math.round(point[0])},${Math.round(point[1])}`;
+      return `X:${Math.round(point[0])} Y:${Math.round(point[1])}`;
     }
   };
 

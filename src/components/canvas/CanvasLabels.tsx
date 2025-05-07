@@ -1,7 +1,7 @@
 
-import { memo, useMemo } from "react";
+import { memo, useMemo, useState } from "react";
 import { Label } from "@/hooks/useDummyData";
-import { Circle, Group, Line, Rect, Text } from "react-konva";
+import { Circle, Group, Line, Rect, Text, Transformer } from "react-konva";
 
 interface CanvasLabelsProps {
   labels: Label[];
@@ -9,6 +9,8 @@ interface CanvasLabelsProps {
   highlightedLabelId: string | null;
   onLabelSelect: (id: string) => void;
   onLabelHover: (id: string | null) => void;
+  onLabelUpdate?: (id: string, newCoordinates: number[][]) => void;
+  onLabelDelete?: (id: string) => void;
 }
 
 // Color palette for different categories
@@ -29,8 +31,12 @@ export const CanvasLabels = memo(({
   selectedLabelId,
   highlightedLabelId,
   onLabelSelect,
-  onLabelHover
+  onLabelHover,
+  onLabelUpdate,
+  onLabelDelete
 }: CanvasLabelsProps) => {
+  const [isTransforming, setIsTransforming] = useState(false);
+  
   // Generate consistent colors for categories
   const categoryColors = useMemo(() => {
     const uniqueCategories = Array.from(new Set(labels.map(label => label.category)));
@@ -62,7 +68,7 @@ export const CanvasLabels = memo(({
     
     // For highlighted or selected labels
     if (isHighlighted || isSelected) {
-      return 0.25; // More visible
+      return 0.3; // More visible
     }
     
     // Default opacity
@@ -80,8 +86,10 @@ export const CanvasLabels = memo(({
         if (label.type === "rect" && label.coordinates?.length === 2) {
           const [x1, y1] = label.coordinates[0];
           const [x2, y2] = label.coordinates[1];
-          const width = x2 - x1;
-          const height = y2 - y1;
+          const x = Math.min(x1, x2);
+          const y = Math.min(y1, y2);
+          const width = Math.abs(x2 - x1);
+          const height = Math.abs(y2 - y1);
           
           return (
             <Group 
@@ -89,24 +97,37 @@ export const CanvasLabels = memo(({
               onClick={() => onLabelSelect(label.id)}
               onMouseEnter={() => onLabelHover(label.id)}
               onMouseLeave={() => onLabelHover(null)}
+              onDblClick={() => onLabelDelete?.(label.id)}
+              draggable={isSelected}
+              onDragEnd={(e) => {
+                if (onLabelUpdate) {
+                  const node = e.target;
+                  const newX1 = node.x();
+                  const newY1 = node.y();
+                  const newX2 = newX1 + width;
+                  const newY2 = newY1 + height;
+                  onLabelUpdate(label.id, [[newX1, newY1], [newX2, newY2]]);
+                }
+              }}
             >
               <Rect
-                x={x1}
-                y={y1}
+                x={x}
+                y={y}
                 width={width}
                 height={height}
                 stroke={labelColor}
-                strokeWidth={1}
+                strokeWidth={0.8}
                 fill={labelColor}
                 opacity={opacity}
                 shadowColor="black"
                 shadowBlur={isSelected || isHighlighted ? 4 : 0}
                 shadowOpacity={isSelected || isHighlighted ? 0.4 : 0}
                 perfectDrawEnabled={false}
+                name={`label-${label.id}`}
               />
               <Text
-                x={x1}
-                y={y1 - 16}
+                x={x}
+                y={y - 16}
                 text={label.category || "未标注"}
                 fontSize={10}
                 padding={3}
@@ -114,6 +135,56 @@ export const CanvasLabels = memo(({
                 background={labelColor}
                 perfectDrawEnabled={false}
               />
+              
+              {isSelected && (
+                <Transformer
+                  anchorStroke={labelColor}
+                  borderStroke={labelColor}
+                  anchorFill="white"
+                  anchorSize={8}
+                  rotateEnabled={false}
+                  enabledAnchors={['top-left', 'top-right', 'bottom-left', 'bottom-right']}
+                  boundBoxFunc={(oldBox, newBox) => {
+                    // Minimum size constraint
+                    if (newBox.width < 10 || newBox.height < 10) {
+                      return oldBox;
+                    }
+                    return newBox;
+                  }}
+                  onTransformStart={() => setIsTransforming(true)}
+                  onTransformEnd={(e) => {
+                    setIsTransforming(false);
+                    if (onLabelUpdate) {
+                      const node = e.target;
+                      const scaleX = node.scaleX();
+                      const scaleY = node.scaleY();
+                      
+                      // Reset scale to avoid compounding transforms
+                      node.scaleX(1);
+                      node.scaleY(1);
+                      
+                      const newX1 = node.x();
+                      const newY1 = node.y();
+                      const newX2 = newX1 + width * scaleX;
+                      const newY2 = newY1 + height * scaleY;
+                      
+                      onLabelUpdate(label.id, [[newX1, newY1], [newX2, newY2]]);
+                    }
+                  }}
+                  ref={node => {
+                    if (node && !isTransforming) {
+                      const stage = node.getStage();
+                      if (stage) {
+                        const rect = stage.findOne(`.label-${label.id}`);
+                        if (rect) {
+                          node.nodes([rect]);
+                          node.getLayer()?.batchDraw();
+                        }
+                      }
+                    }
+                  }}
+                />
+              )}
             </Group>
           );
         }
@@ -133,18 +204,40 @@ export const CanvasLabels = memo(({
               onClick={() => onLabelSelect(label.id)}
               onMouseEnter={() => onLabelHover(label.id)}
               onMouseLeave={() => onLabelHover(null)}
+              onDblClick={() => onLabelDelete?.(label.id)}
+              draggable={isSelected}
+              onDragEnd={(e) => {
+                if (onLabelUpdate) {
+                  const node = e.target;
+                  const dx = node.x();
+                  const dy = node.y();
+                  
+                  // Move all points by the drag amount
+                  const newCoordinates = label.coordinates.map(point => [
+                    point[0] + dx,
+                    point[1] + dy
+                  ]);
+                  
+                  // Reset position to avoid compounding transforms
+                  node.x(0);
+                  node.y(0);
+                  
+                  onLabelUpdate(label.id, newCoordinates);
+                }
+              }}
             >
               <Line
                 points={points}
                 closed={true}
                 stroke={labelColor}
-                strokeWidth={1}
+                strokeWidth={0.8}
                 fill={labelColor}
                 opacity={opacity}
                 shadowColor="black"
                 shadowBlur={isSelected || isHighlighted ? 4 : 0}
                 shadowOpacity={isSelected || isHighlighted ? 0.4 : 0}
                 perfectDrawEnabled={false}
+                name={`label-${label.id}`}
               />
               <Text
                 x={centerX - 20}
@@ -156,6 +249,28 @@ export const CanvasLabels = memo(({
                 background={labelColor}
                 perfectDrawEnabled={false}
               />
+              
+              {/* For polygon editing we would add point handles here */}
+              {isSelected && label.coordinates.map((point, index) => (
+                <Circle
+                  key={`point-${index}`}
+                  x={point[0]}
+                  y={point[1]}
+                  radius={5}
+                  fill="white"
+                  stroke={labelColor}
+                  strokeWidth={1}
+                  draggable
+                  onDragEnd={(e) => {
+                    if (onLabelUpdate) {
+                      const newPoint = [e.target.x(), e.target.y()];
+                      const newCoordinates = [...label.coordinates];
+                      newCoordinates[index] = newPoint as [number, number];
+                      onLabelUpdate(label.id, newCoordinates);
+                    }
+                  }}
+                />
+              ))}
             </Group>
           );
         }
@@ -169,6 +284,14 @@ export const CanvasLabels = memo(({
               onClick={() => onLabelSelect(label.id)}
               onMouseEnter={() => onLabelHover(label.id)}
               onMouseLeave={() => onLabelHover(null)}
+              onDblClick={() => onLabelDelete?.(label.id)}
+              draggable={isSelected}
+              onDragEnd={(e) => {
+                if (onLabelUpdate) {
+                  const node = e.target;
+                  onLabelUpdate(label.id, [[node.x(), node.y()]]);
+                }
+              }}
             >
               <Circle
                 x={x}
@@ -176,12 +299,13 @@ export const CanvasLabels = memo(({
                 radius={4}
                 fill={labelColor}
                 stroke={labelColor}
-                strokeWidth={1}
+                strokeWidth={0.8}
                 opacity={0.7}
                 shadowColor="black"
                 shadowBlur={isSelected || isHighlighted ? 4 : 0}
                 shadowOpacity={isSelected || isHighlighted ? 0.4 : 0}
                 perfectDrawEnabled={false}
+                name={`label-${label.id}`}
               />
               <Text
                 x={x + 6}

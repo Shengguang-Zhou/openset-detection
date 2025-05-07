@@ -66,14 +66,16 @@ export function CollapsedLabelView({ labels, onLabelHover }: CollapsedLabelViewP
     }
   };
 
-  // Format coordinates for display
+  // Format coordinates for display in x,y,w,h format
   const formatCoordinates = (label: Label) => {
     if (label.type === 'rect' && label.coordinates?.length === 2) {
       const [x1, y1] = label.coordinates[0];
       const [x2, y2] = label.coordinates[1];
+      const x = Math.round(Math.min(x1, x2));
+      const y = Math.round(Math.min(y1, y2));
       const width = Math.round(Math.abs(x2 - x1));
       const height = Math.round(Math.abs(y2 - y1));
-      return `${Math.round(x1)},${Math.round(y1)},${width}×${height}`;
+      return `${x},${y},${width}×${height}`;
     } else if (label.type === 'polygon') {
       return `${label.coordinates.length} 点`;
     } else if (label.type === 'point') {
@@ -84,7 +86,7 @@ export function CollapsedLabelView({ labels, onLabelHover }: CollapsedLabelViewP
   };
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 py-2">
       {/* Top level - category counts */}
       <div className="flex flex-wrap gap-2">
         {Object.entries(categoryCounts).map(([category, count]) => {
@@ -104,7 +106,7 @@ export function CollapsedLabelView({ labels, onLabelHover }: CollapsedLabelViewP
               
               {/* Second level - detailed info when expanded */}
               {isExpanded && (
-                <div className="mt-1 pl-2 space-y-1 max-h-32 overflow-y-auto">
+                <div className="mt-1 flex flex-wrap gap-1 max-w-md">
                   {labels
                     .filter(label => label.category === category)
                     .map(label => (
@@ -115,7 +117,7 @@ export function CollapsedLabelView({ labels, onLabelHover }: CollapsedLabelViewP
                         onMouseLeave={() => onLabelHover(null)}
                       >
                         <span className="text-gray-500">{getLabelTypeIcon(label.type)}</span>
-                        <span className="flex-1">{formatCoordinates(label)}</span>
+                        <span>{formatCoordinates(label)}</span>
                         {label.isAiSuggestion && (
                           <span className="text-xs bg-blue-100 text-blue-800 px-1 rounded">AI</span>
                         )}

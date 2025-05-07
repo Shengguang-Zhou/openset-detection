@@ -99,6 +99,11 @@ export const OptimizedCanvas = memo(({
     setPendingLabel(null);
   }, [pendingLabel, onAddLabel, toast]);
 
+  // Handle label update (coordinates)
+  const handleLabelCoordinatesUpdate = useCallback((labelId: string, newCoordinates: number[][]) => {
+    onUpdateLabel(labelId, { coordinates: newCoordinates });
+  }, [onUpdateLabel]);
+
   // Canvas interactions
   const {
     handleMouseDown,
@@ -313,6 +318,8 @@ export const OptimizedCanvas = memo(({
             highlightedLabelId={highlightedLabelId}
             onLabelSelect={handleLabelSelect}
             onLabelHover={setHighlightedLabelId}
+            onLabelUpdate={handleLabelCoordinatesUpdate}
+            onLabelDelete={onDeleteLabel}
           />
           
           {/* Current drawing shape */}

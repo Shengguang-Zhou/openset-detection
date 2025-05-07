@@ -3,7 +3,6 @@ import { ZapIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { OptimizedCanvas } from "@/components/OptimizedCanvas";
 import { Label as ImageLabel } from "@/hooks/useDummyData";
-import { useState } from "react";
 
 // Define an interface that matches the Image type expected by OptimizedCanvas
 interface Image {
@@ -30,8 +29,8 @@ interface CanvasAreaProps {
   onDeleteLabel: (labelId: string) => void;
   onSelectRegion: (region: {x: number, y: number, width: number, height: number}) => void;
   setActiveRightPanel: (panel: "labels" | "ai") => void;
-  highlightedLabelId: string | null; // Added this missing prop
-  setHighlightedLabelId: (id: string | null) => void; // Added this missing prop
+  highlightedLabelId: string | null;
+  setHighlightedLabelId: (id: string | null) => void;
 }
 
 const CanvasArea = ({
