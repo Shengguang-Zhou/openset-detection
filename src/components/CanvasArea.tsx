@@ -4,11 +4,20 @@ import { Button } from "@/components/ui/button";
 import AnnotationCanvas from "@/components/AnnotationCanvas";
 import { Label as ImageLabel } from "@/hooks/useDummyData";
 
+// Define an interface that matches the Image type expected by AnnotationCanvas
+interface Image {
+  id: string;
+  fileName: string;
+  thumbnail: string;
+  osdFlag: 'unknown' | 'reviewed' | 'clean';
+  labels: ImageLabel[];
+}
+
 interface CanvasAreaProps {
   selectedImage: {
     id: string;
     fileName: string;
-    thumbnail?: string; // Make thumbnail optional
+    thumbnail?: string; // Optional in the props
     osdFlag: 'unknown' | 'reviewed' | 'clean';
     labels: ImageLabel[];
   } | null;
@@ -55,7 +64,10 @@ const CanvasArea = ({
       <div className="flex-1 flex items-center justify-center bg-gray-100">
         {selectedImage ? (
           <AnnotationCanvas
-            image={selectedImage}
+            image={{
+              ...selectedImage,
+              thumbnail: selectedImage.thumbnail || `https://picsum.photos/200/200?random=${selectedImage.id}` // Provide a default for thumbnail if missing
+            } as Image}
             onAddLabel={onAddLabel}
             onUpdateLabel={onUpdateLabel}
             onDeleteLabel={onDeleteLabel}
