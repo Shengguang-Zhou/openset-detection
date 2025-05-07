@@ -1,10 +1,12 @@
 
 import { ZapIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { OptimizedCanvas } from "@/components/OptimizedCanvas";
 import { Label as ImageLabel } from "@/hooks/useDummyData";
+import { Canvas } from "@/components/canvas/Canvas";
+import { CanvasProvider } from "@/contexts/CanvasContext";
+import { ColorProvider } from "@/contexts/ColorContext";
 
-// Define an interface that matches the Image type expected by OptimizedCanvas
+// Define an interface that matches the Image type expected by Canvas
 interface Image {
   id: string;
   fileName: string;
@@ -17,11 +19,11 @@ interface CanvasAreaProps {
   selectedImage: {
     id: string;
     fileName: string;
-    thumbnail?: string; // Optional in the props
+    thumbnail?: string;
     osdFlag: 'unknown' | 'reviewed' | 'clean';
     labels: ImageLabel[];
   } | null;
-  categories: string[]; // Added categories
+  categories: string[];
   imagePromptMethod: "upload" | "select";
   promptMode: "free" | "text" | "image";
   onAddLabel: (newLabel: any) => void;
@@ -70,20 +72,22 @@ const CanvasArea = ({
       
       <div className="flex-1 flex items-center justify-center bg-gray-100">
         {selectedImage ? (
-          <OptimizedCanvas
-            image={{
-              ...selectedImage,
-              thumbnail: selectedImage.thumbnail || `https://picsum.photos/200/200?random=${selectedImage.id}`
-            } as Image}
-            categories={categories}
-            onAddLabel={onAddLabel}
-            onUpdateLabel={onUpdateLabel}
-            onDeleteLabel={onDeleteLabel}
-            isSelectMode={imagePromptMethod === "select" && promptMode === "image"}
-            onSelectRegion={onSelectRegion}
-            highlightedLabelId={highlightedLabelId}
-            setHighlightedLabelId={setHighlightedLabelId}
-          />
+          <CanvasProvider>
+            <ColorProvider>
+              <Canvas
+                image={{
+                  ...selectedImage,
+                  thumbnail: selectedImage.thumbnail || `https://picsum.photos/200/200?random=${selectedImage.id}`
+                } as Image}
+                categories={categories}
+                onAddLabel={onAddLabel}
+                onUpdateLabel={onUpdateLabel}
+                onDeleteLabel={onDeleteLabel}
+                isSelectMode={imagePromptMethod === "select" && promptMode === "image"}
+                onSelectRegion={onSelectRegion}
+              />
+            </ColorProvider>
+          </CanvasProvider>
         ) : (
           <div className="text-gray-500">请选择一张图像以开始标注</div>
         )}

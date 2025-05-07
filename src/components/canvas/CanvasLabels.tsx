@@ -1,4 +1,3 @@
-
 import { memo, useMemo, useState } from "react";
 import { Label } from "@/hooks/useDummyData";
 import { Circle, Group, Line, Rect, Text, Transformer } from "react-konva";
