@@ -18,6 +18,8 @@ interface LabelPanelProps {
   onAddCategory: (category: string) => void;
   onUpdateLabel: (id: string, label: Partial<ImageLabel>) => void;
   onDeleteLabel: (id: string) => void;
+  onHighlightLabel: (id: string | null) => void;
+  highlightedLabelId: string | null;
 }
 
 const LabelPanel = ({
@@ -26,6 +28,8 @@ const LabelPanel = ({
   onAddCategory,
   onUpdateLabel,
   onDeleteLabel,
+  onHighlightLabel,
+  highlightedLabelId
 }: LabelPanelProps) => {
   const [newCategory, setNewCategory] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
@@ -112,68 +116,75 @@ const LabelPanel = ({
           <ScrollArea className="flex-1">
             <div className="p-3 space-y-3">
               {filteredLabels.length > 0 ? (
-                filteredLabels.map((label) => (
-                  <div
-                    key={label.id}
-                    className={`p-3 rounded-md border ${
-                      label.isAiSuggestion ? "border-blue-200 bg-blue-50" : "border-gray-200"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <div
-                          className={`p-1 rounded ${
-                            label.isAiSuggestion ? "bg-blue-100" : "bg-orange-100"
-                          }`}
-                        >
-                          {getTypeIcon(label.type)}
-                        </div>
-                        <span className="text-sm font-medium">{label.category}</span>
-                        {label.isAiSuggestion && (
-                          <Badge className="bg-accent text-white">
-                            AI {Math.round((label.confidence || 0) * 100)}%
-                          </Badge>
-                        )}
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onDeleteLabel(label.id)}
-                        className="h-7 w-7 p-0 text-gray-500 hover:text-red-500 hover:bg-red-50"
-                      >
-                        <Trash2 size={14} />
-                      </Button>
-                    </div>
-                    <div className="text-xs text-gray-500 mb-3">
-                      {getCoordinateString(label)}
-                    </div>
-                    <div>
-                      <Label className="text-xs mb-1 block">选择标签类别</Label>
-                      <div className="flex flex-wrap gap-2 max-h-20 overflow-y-auto">
-                        {categories.length > 0 ? (
-                          categories.map((cat) => (
-                            <Badge
-                              key={cat}
-                              variant="outline"
-                              className={`cursor-pointer transition-all ${
-                                label.category === cat
-                                  ? "bg-primary text-white"
-                                  : "hover:bg-gray-100"
-                              }`}
-                              onClick={() => handleCategoryChange(label.id, cat)}
-                            >
-                              {cat}
-                            </Badge>
-                          ))
-                        ) : (
-                          <div className="text-xs text-gray-500 italic">
-                            请先添加类别
+                filteredLabels.map((label) => {
+                  const isHighlighted = label.id === highlightedLabelId;
+                  return (
+                    <div
+                      key={label.id}
+                      className={`p-3 rounded-md border transition-colors ${
+                        isHighlighted ? 'ring-2 ring-primary bg-primary/5' : ''
+                      } ${
+                        label.isAiSuggestion ? "border-blue-200 bg-blue-50" : "border-gray-200"
+                      }`}
+                      onMouseEnter={() => onHighlightLabel(label.id)}
+                      onMouseLeave={() => onHighlightLabel(null)}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <div
+                            className={`p-1 rounded ${
+                              label.isAiSuggestion ? "bg-blue-100" : "bg-orange-100"
+                            }`}
+                          >
+                            {getTypeIcon(label.type)}
                           </div>
-                        )}
+                          <span className="text-sm font-medium">{label.category}</span>
+                          {label.isAiSuggestion && (
+                            <Badge className="bg-accent text-white">
+                              AI {Math.round((label.confidence || 0) * 100)}%
+                            </Badge>
+                          )}
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => onDeleteLabel(label.id)}
+                          className="h-7 w-7 p-0 text-gray-500 hover:text-red-500 hover:bg-red-50"
+                        >
+                          <Trash2 size={14} />
+                        </Button>
+                      </div>
+                      <div className="text-xs text-gray-500 mb-3">
+                        {getCoordinateString(label)}
+                      </div>
+                      <div>
+                        <Label className="text-xs mb-1 block">选择标签类别</Label>
+                        <div className="flex flex-wrap gap-2 max-h-20 overflow-y-auto">
+                          {categories.length > 0 ? (
+                            categories.map((cat) => (
+                              <Badge
+                                key={cat}
+                                variant="outline"
+                                className={`cursor-pointer transition-all ${
+                                  label.category === cat
+                                    ? "bg-primary text-white"
+                                    : "hover:bg-gray-100"
+                                }`}
+                                onClick={() => handleCategoryChange(label.id, cat)}
+                              >
+                                {cat}
+                              </Badge>
+                            ))
+                          ) : (
+                            <div className="text-xs text-gray-500 italic">
+                              请先添加类别
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               ) : (
                 <div className="text-center py-8 text-gray-500">
                   <p>没有找到匹配的标签</p>

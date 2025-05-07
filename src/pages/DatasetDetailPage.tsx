@@ -8,9 +8,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Download, ZapIcon, Search } from "lucide-react";
 import { useDummyData } from "@/hooks/useDummyData";
 import ExportYoloDialog from "@/components/ExportYoloDialog";
-import PromptModeSidebar from "@/components/PromptModeSidebar";
-import CanvasArea from "@/components/CanvasArea";
+import { ImprovedPromptSidebar } from "@/components/ImprovedPromptSidebar";
+import { OptimizedCanvas } from "@/components/OptimizedCanvas";
 import RightPanels from "@/components/RightPanels";
+import { CollapsibleLayout } from "@/components/CollapsibleLayout";
+import { CollapsedLabelView } from "@/components/CollapsedLabelView";
 
 const DatasetDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -36,6 +38,7 @@ const DatasetDetailPage = () => {
   const [imagePromptMethod, setImagePromptMethod] = useState<"upload" | "select">("upload");
   const [isRunningDetection, setIsRunningDetection] = useState(false);
   const [selectionBox, setSelectionBox] = useState<{x: number, y: number, width: number, height: number} | null>(null);
+  const [highlightedLabelId, setHighlightedLabelId] = useState<string | null>(null);
 
   if (!id) {
     navigate("/datasets");
@@ -56,10 +59,8 @@ const DatasetDetailPage = () => {
   const handleRunOsd = () => {
     if (!dataset) return;
     
-    // Set loading state
     setIsRunningDetection(true);
     
-    // Simulate API call with timeout
     setTimeout(() => {
       runOsd(id);
       setIsRunningDetection(false);
@@ -79,7 +80,7 @@ const DatasetDetailPage = () => {
     
     setShowExportDialog(false);
     
-    // 模拟下载
+    // Simulate download
     setTimeout(() => {
       const a = document.createElement('a');
       a.style.display = 'none';
@@ -116,14 +117,12 @@ const DatasetDetailPage = () => {
   const handleRunDetection = () => {
     setIsRunningDetection(true);
     
-    // Simulate API call with timeout
     setTimeout(() => {
-      // Add a fake detected label based on the prompt mode
       if (selectedImage) {
         const newLabel = {
           id: `label-auto-${Date.now()}`,
           category: promptMode === "text" ? "文本检测" : promptMode === "image" ? "图像匹配" : "自动检测",
-          type: "rect" as const, // Fix: Use a literal type with 'as const' to ensure type safety
+          type: "rect" as const,
           coordinates: [
             [50, 50],
             [200, 200]
@@ -132,7 +131,6 @@ const DatasetDetailPage = () => {
           confidence: 0.85
         };
         
-        // Add the new label to the selected image
         updateImageLabel(id, selectedImage.id, newLabel.id, newLabel);
       }
       
@@ -169,6 +167,90 @@ const DatasetDetailPage = () => {
       </div>
     );
   }
+
+  // Prepare the components for the collapsible layout
+  const leftSidebar = (
+    <ImprovedPromptSidebar
+      promptMode={promptMode}
+      setPromptMode={setPromptMode}
+      textPrompt={textPrompt}
+      setTextPrompt={setTextPrompt}
+      imagePromptMethod={imagePromptMethod}
+      setImagePromptMethod={setImagePromptMethod}
+      referenceImage={referenceImage}
+      setReferenceImage={setReferenceImage}
+      selectionBox={selectionBox}
+      isRunningDetection={isRunningDetection}
+      onRunDetection={handleRunDetection}
+    />
+  );
+  
+  const mainContent = (
+    <div className="bg-white rounded-lg border overflow-hidden flex flex-col h-full">
+      <div className="p-3 border-b flex items-center justify-between">
+        <div className="font-medium truncate">
+          {selectedImage ? selectedImage.fileName : "未选择图像"}
+        </div>
+        
+        <div className="flex items-center">
+          {selectedImage && selectedImage.osdFlag === 'unknown' && (
+            <Button
+              size="sm"
+              className="bg-accent hover:bg-blue-700"
+              onClick={() => setActiveRightPanel("ai")}
+            >
+              <ZapIcon className="mr-2 h-4 w-4" />
+              AI 建议
+            </Button>
+          )}
+        </div>
+      </div>
+      
+      <div className="flex-1 flex items-center justify-center bg-gray-100">
+        {selectedImage ? (
+          <OptimizedCanvas
+            image={{
+              ...selectedImage,
+              thumbnail: selectedImage.thumbnail || `https://picsum.photos/200/200?random=${selectedImage.id}`
+            }}
+            onAddLabel={handleAddLabel}
+            onUpdateLabel={handleLabelChange}
+            onDeleteLabel={handleLabelDelete}
+            isSelectMode={imagePromptMethod === "select" && promptMode === "image"}
+            onSelectRegion={setSelectionBox}
+            highlightedLabelId={highlightedLabelId}
+            setHighlightedLabelId={setHighlightedLabelId}
+          />
+        ) : (
+          <div className="text-gray-500">请选择一张图像以开始标注</div>
+        )}
+      </div>
+    </div>
+  );
+  
+  const rightSidebar = (
+    <RightPanels
+      filteredImages={filteredImages}
+      selectedImageIndex={selectedImageIndex}
+      setSelectedImageIndex={setSelectedImageIndex}
+      selectedImage={selectedImage}
+      datasetLabels={datasetLabels}
+      activeRightPanel={activeRightPanel}
+      setActiveRightPanel={setActiveRightPanel}
+      onAddCategory={handleAddCategory}
+      onUpdateLabel={handleLabelChange}
+      onDeleteLabel={handleLabelDelete}
+      onAcceptAiSuggestion={handleAcceptAiSuggestion}
+    />
+  );
+
+  // Collapsed labels view
+  const collapsedLabels = selectedImage ? (
+    <CollapsedLabelView 
+      labels={selectedImage.labels} 
+      onLabelHover={setHighlightedLabelId} 
+    />
+  ) : null;
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -221,47 +303,12 @@ const DatasetDetailPage = () => {
           </div>
         </div>
         
-        <div className="grid grid-cols-12 gap-3 h-[calc(100vh-180px)]">
-          {/* 左侧边栏 - 模式选择 */}
-          <PromptModeSidebar
-            promptMode={promptMode}
-            setPromptMode={setPromptMode}
-            textPrompt={textPrompt}
-            setTextPrompt={setTextPrompt}
-            imagePromptMethod={imagePromptMethod}
-            setImagePromptMethod={setImagePromptMethod}
-            referenceImage={referenceImage}
-            setReferenceImage={setReferenceImage}
-            selectionBox={selectionBox}
-            isRunningDetection={isRunningDetection}
-            onRunDetection={handleRunDetection}
-          />
-          
-          {/* 中间标注画布 */}
-          <CanvasArea
-            selectedImage={selectedImage}
-            imagePromptMethod={imagePromptMethod}
-            promptMode={promptMode}
-            onAddLabel={handleAddLabel}
-            onUpdateLabel={handleLabelChange}
-            onDeleteLabel={handleLabelDelete}
-            onSelectRegion={setSelectionBox}
-            setActiveRightPanel={setActiveRightPanel}
-          />
-          
-          {/* 右侧栏 - 图像画廊和标签面板 */}
-          <RightPanels
-            filteredImages={filteredImages}
-            selectedImageIndex={selectedImageIndex}
-            setSelectedImageIndex={setSelectedImageIndex}
-            selectedImage={selectedImage}
-            datasetLabels={datasetLabels}
-            activeRightPanel={activeRightPanel}
-            setActiveRightPanel={setActiveRightPanel}
-            onAddCategory={handleAddCategory}
-            onUpdateLabel={handleLabelChange}
-            onDeleteLabel={handleLabelDelete}
-            onAcceptAiSuggestion={handleAcceptAiSuggestion}
+        <div className="h-[calc(100vh-180px)]">
+          <CollapsibleLayout
+            leftSidebar={leftSidebar}
+            mainContent={mainContent}
+            rightSidebar={rightSidebar}
+            collapsedLabels={collapsedLabels}
           />
         </div>
       </main>

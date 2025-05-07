@@ -5,6 +5,7 @@ import ImageGallery from "@/components/ImageGallery";
 import LabelPanel from "@/components/LabelPanel";
 import AISuggestionPanel from "@/components/AISuggestionPanel";
 import { Label as ImageLabel } from "@/hooks/useDummyData";
+import { useState } from "react";
 
 interface Image {
   id: string;
@@ -41,9 +42,11 @@ const RightPanels = ({
   onDeleteLabel,
   onAcceptAiSuggestion
 }: RightPanelsProps) => {
+  const [highlightedLabelId, setHighlightedLabelId] = useState<string | null>(null);
+
   return (
-    <div className="col-span-3 flex flex-col gap-3">
-      {/* 上方图像画廊 */}
+    <div className="flex flex-col gap-3 h-full">
+      {/* Upper image gallery */}
       <div className="bg-white rounded-lg border overflow-hidden h-[45%]">
         <div className="p-3 border-b font-medium">图像画廊</div>
         <ScrollArea className="h-[calc(100%-40px)]">
@@ -57,7 +60,7 @@ const RightPanels = ({
         </ScrollArea>
       </div>
       
-      {/* 下方标签面板 */}
+      {/* Lower label panel */}
       <div className="bg-white rounded-lg border overflow-hidden flex-grow">
         <Tabs value={activeRightPanel} className="h-full flex flex-col">
           <div className="border-b">
@@ -87,6 +90,8 @@ const RightPanels = ({
                 onAddCategory={onAddCategory}
                 onUpdateLabel={onUpdateLabel}
                 onDeleteLabel={onDeleteLabel}
+                onHighlightLabel={setHighlightedLabelId}
+                highlightedLabelId={highlightedLabelId}
               />
             )}
           </TabsContent>
@@ -97,6 +102,8 @@ const RightPanels = ({
                 image={selectedImage}
                 categories={datasetLabels}
                 onAcceptSuggestion={onAcceptAiSuggestion}
+                onHighlightLabel={setHighlightedLabelId}
+                highlightedLabelId={highlightedLabelId}
               />
             )}
           </TabsContent>

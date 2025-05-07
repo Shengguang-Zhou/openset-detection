@@ -1,10 +1,11 @@
 
 import { ZapIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import AnnotationCanvas from "@/components/AnnotationCanvas";
+import { OptimizedCanvas } from "@/components/OptimizedCanvas";
 import { Label as ImageLabel } from "@/hooks/useDummyData";
+import { useState } from "react";
 
-// Define an interface that matches the Image type expected by AnnotationCanvas
+// Define an interface that matches the Image type expected by OptimizedCanvas
 interface Image {
   id: string;
   fileName: string;
@@ -40,6 +41,8 @@ const CanvasArea = ({
   onSelectRegion,
   setActiveRightPanel
 }: CanvasAreaProps) => {
+  const [highlightedLabelId, setHighlightedLabelId] = useState<string | null>(null);
+  
   return (
     <div className="col-span-7 bg-white rounded-lg border overflow-hidden flex flex-col">
       <div className="p-3 border-b flex items-center justify-between">
@@ -63,16 +66,18 @@ const CanvasArea = ({
       
       <div className="flex-1 flex items-center justify-center bg-gray-100">
         {selectedImage ? (
-          <AnnotationCanvas
+          <OptimizedCanvas
             image={{
               ...selectedImage,
-              thumbnail: selectedImage.thumbnail || `https://picsum.photos/200/200?random=${selectedImage.id}` // Provide a default for thumbnail if missing
+              thumbnail: selectedImage.thumbnail || `https://picsum.photos/200/200?random=${selectedImage.id}`
             } as Image}
             onAddLabel={onAddLabel}
             onUpdateLabel={onUpdateLabel}
             onDeleteLabel={onDeleteLabel}
             isSelectMode={imagePromptMethod === "select" && promptMode === "image"}
             onSelectRegion={onSelectRegion}
+            highlightedLabelId={highlightedLabelId}
+            setHighlightedLabelId={setHighlightedLabelId}
           />
         ) : (
           <div className="text-gray-500">请选择一张图像以开始标注</div>
