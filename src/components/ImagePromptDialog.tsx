@@ -7,11 +7,12 @@ import { ColorProvider } from "@/contexts/ColorContext";
 import { Canvas } from "@/components/canvas/Canvas";
 import { MiniLabelPanel } from "./MiniLabelPanel";
 import { Label } from "@/hooks/useDummyData";
+import { useToast } from "./ui/use-toast";
 
 interface ImagePromptDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: () => void;
+  onConfirm: (selectedLabels: Label[]) => void;
   imageUrl: string;
   categories: string[];
   selectionBox: { x: number; y: number; width: number; height: number } | null;
@@ -28,6 +29,7 @@ export function ImagePromptDialog({
   onSelectRegion
 }: ImagePromptDialogProps) {
   const [labels, setLabels] = useState<Label[]>([]);
+  const { toast } = useToast();
   
   // Reset labels when dialog opens or closes
   useEffect(() => {
@@ -42,18 +44,33 @@ export function ImagePromptDialog({
       ...current,
       { ...newLabel, id: labelId }
     ]);
+    
+    toast({
+      title: "已添加标签",
+      description: `已成功添加「${newLabel.category}」标签`,
+    });
   };
 
-  const handleUpdateLabel = (labelId: string, updatedProps: Partial<Label>) => {
-    setLabels(current => 
-      current.map(label => 
-        label.id === labelId ? { ...label, ...updatedProps } : label
-      )
-    );
+  const handleEditLabel = (label: Label) => {
+    // This would be implemented with a label edit dialog
+    // For now, we just log for debugging
+    console.log("Edit label:", label);
   };
 
   const handleDeleteLabel = (labelId: string) => {
     setLabels(current => current.filter(label => label.id !== labelId));
+    
+    toast({
+      variant: "destructive",
+      title: "已删除标签",
+      description: "标签已被删除",
+    });
+  };
+
+  const handleAddNewLabel = () => {
+    // This triggers the drawing mode on the canvas
+    // The actual implementation is handled in the Canvas component
+    // We could add code here to communicate with the Canvas component
   };
 
   return (
@@ -76,7 +93,13 @@ export function ImagePromptDialog({
                   }}
                   categories={categories}
                   onAddLabel={handleAddLabel}
-                  onUpdateLabel={handleUpdateLabel}
+                  onUpdateLabel={(id, updated) => {
+                    setLabels(current => 
+                      current.map(label => 
+                        label.id === id ? { ...label, ...updated } : label
+                      )
+                    );
+                  }}
                   onDeleteLabel={handleDeleteLabel}
                   isSelectMode={false}
                   onSelectRegion={onSelectRegion}
@@ -88,13 +111,9 @@ export function ImagePromptDialog({
           <div className="col-span-1 h-[400px]">
             <MiniLabelPanel 
               labels={labels}
-              onEditLabel={(label) => {
-                // Edit functionality could be implemented here
-              }}
+              onEditLabel={handleEditLabel}
               onDeleteLabel={handleDeleteLabel}
-              onAddNewLabel={() => {
-                // This would trigger draw mode on the canvas
-              }}
+              onAddNewLabel={handleAddNewLabel}
             />
           </div>
         </div>
@@ -103,8 +122,11 @@ export function ImagePromptDialog({
           <Button variant="outline" onClick={onClose}>
             取消
           </Button>
-          <Button onClick={onConfirm}>
-            确认选择
+          <Button 
+            onClick={() => onConfirm(labels)}
+            disabled={labels.length === 0}
+          >
+            确认选择 ({labels.length})
           </Button>
         </div>
       </DialogContent>

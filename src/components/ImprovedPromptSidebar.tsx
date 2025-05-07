@@ -21,7 +21,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { ImagePromptDialog } from "@/components/ImagePromptDialog";
+import { useToast } from "@/components/ui/use-toast";
+import { Label as LabelType } from "@/hooks/useDummyData";
 
 interface ImprovedPromptSidebarProps {
   promptMode: "free" | "text" | "image";
@@ -56,6 +58,8 @@ export function ImprovedPromptSidebar({
   const [modelValue, setModelValue] = useState("智拓标注 Pro");
   const [showFullImageDialog, setShowFullImageDialog] = useState(false);
   const canvasPreviewRef = useRef<HTMLDivElement>(null);
+  const [promptLabels, setPromptLabels] = useState<LabelType[]>([]);
+  const { toast } = useToast();
   
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -67,6 +71,19 @@ export function ImprovedPromptSidebar({
         }
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  // Handle confirming labels from ImagePromptDialog
+  const handleConfirmLabels = (labels: LabelType[]) => {
+    setPromptLabels(labels);
+    setShowFullImageDialog(false);
+    
+    if (labels.length > 0) {
+      toast({
+        title: "已选择图像区域",
+        description: `已标注 ${labels.length} 个目标区域`,
+      });
     }
   };
 
@@ -187,56 +204,44 @@ export function ImprovedPromptSidebar({
                 
                 {imagePromptMethod === "select" && (
                   <div className="border rounded p-2 space-y-2">
-                    <p className="text-xs text-gray-500">
-                      请在画布上按住鼠标拖动创建橙色选择框作为参考区域
-                    </p>
-                    
-                    <div className="relative">
-                      <div 
-                        ref={canvasPreviewRef} 
-                        className="h-[120px] bg-gray-100 flex items-center justify-center overflow-hidden cursor-pointer"
-                        onClick={() => setShowFullImageDialog(true)}
-                      >
-                        {selectionBox ? (
-                          <div className="relative w-full h-full">
-                            <img 
-                              src="https://picsum.photos/800/600" 
-                              alt="当前图像" 
-                              className="w-full h-full object-cover"
-                            />
-                            <div 
-                              className="absolute border-2 border-primary bg-primary/10"
-                              style={{
-                                left: `${selectionBox.x * 100 / 800}%`, 
-                                top: `${selectionBox.y * 100 / 600}%`,
-                                width: `${selectionBox.width * 100 / 800}%`, 
-                                height: `${selectionBox.height * 100 / 600}%`
-                              }}
-                            ></div>
-                          </div>
-                        ) : (
-                          <>
-                            <ImageIcon className="h-6 w-6 text-gray-400" />
-                            <span className="text-xs text-gray-500 ml-2">请选择区域</span>
-                          </>
-                        )}
-                      </div>
-                      
+                    <div className="flex justify-between items-center">
+                      <p className="text-xs text-gray-500">
+                        在图像上标注参考区域
+                      </p>
                       <Button 
-                        size="icon" 
+                        size="sm" 
                         variant="outline" 
-                        className="absolute top-1 right-1 h-6 w-6 bg-white" 
+                        className="h-6 text-xs px-2" 
                         onClick={() => setShowFullImageDialog(true)}
                       >
-                        <Maximize2 className="h-3 w-3" />
+                        打开标注工具
                       </Button>
                     </div>
                     
-                    {selectionBox && (
-                      <div className="mt-2 text-xs text-primary">
-                        已选择区域：X:{selectionBox.x.toFixed(0)} Y:{selectionBox.y.toFixed(0)} 宽:{selectionBox.width.toFixed(0)} 高:{selectionBox.height.toFixed(0)}
-                      </div>
-                    )}
+                    <div 
+                      className="h-[120px] bg-gray-100 flex items-center justify-center overflow-hidden cursor-pointer border rounded"
+                      onClick={() => setShowFullImageDialog(true)}
+                    >
+                      {promptLabels.length > 0 ? (
+                        <div className="relative w-full h-full">
+                          <img 
+                            src="https://picsum.photos/800/600" 
+                            alt="当前图像" 
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
+                            <span className="text-white font-medium">
+                              已标注 {promptLabels.length} 个区域
+                            </span>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <ImageIcon className="h-6 w-6 text-gray-400" />
+                          <span className="text-xs text-gray-500 ml-2">点击标注区域</span>
+                        </>
+                      )}
+                    </div>
                   </div>
                 )}
                 
@@ -281,7 +286,7 @@ export function ImprovedPromptSidebar({
               disabled={isRunningDetection || 
                       (promptMode === "text" && textPrompt.trim() === '') ||
                       (promptMode === "image" && imagePromptMethod === "upload" && !referenceImage) ||
-                      (promptMode === "image" && imagePromptMethod === "select" && !selectionBox)}
+                      (promptMode === "image" && imagePromptMethod === "select" && promptLabels.length === 0)}
             >
               {isRunningDetection ? (
                 <>
@@ -323,43 +328,16 @@ export function ImprovedPromptSidebar({
         </ScrollArea>
       </Tabs>
 
-      {/* Full-size image selection dialog */}
-      <Dialog open={showFullImageDialog} onOpenChange={setShowFullImageDialog}>
-        <DialogContent className="max-w-4xl p-0">
-          <div className="p-4 border-b">
-            <h2 className="font-medium">选择图像区域</h2>
-            <p className="text-sm text-gray-500">在图像上拖动鼠标选择目标区域</p>
-          </div>
-          <div className="p-4 flex items-center justify-center min-h-[400px]">
-            <div className="relative w-full h-[400px]">
-              <img 
-                src="https://picsum.photos/800/600" 
-                alt="当前图像" 
-                className="w-full h-full object-contain"
-              />
-              {selectionBox && (
-                <div 
-                  className="absolute border-2 border-primary bg-primary/10"
-                  style={{
-                    left: `${selectionBox.x}px`, 
-                    top: `${selectionBox.y}px`,
-                    width: `${selectionBox.width}px`, 
-                    height: `${selectionBox.height}px`
-                  }}
-                ></div>
-              )}
-            </div>
-          </div>
-          <div className="p-4 border-t flex justify-between">
-            <Button variant="outline" onClick={() => setShowFullImageDialog(false)}>
-              取消
-            </Button>
-            <Button onClick={() => setShowFullImageDialog(false)}>
-              确认选择
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Full interactive image selection dialog with Canvas */}
+      <ImagePromptDialog
+        isOpen={showFullImageDialog}
+        onClose={() => setShowFullImageDialog(false)}
+        onConfirm={handleConfirmLabels}
+        imageUrl="https://picsum.photos/800/600"
+        categories={categories}
+        selectionBox={null}
+        onSelectRegion={undefined}
+      />
     </div>
   );
 }
