@@ -1,4 +1,3 @@
-
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -36,6 +35,7 @@ interface ImprovedPromptSidebarProps {
   selectionBox: { x: number; y: number; width: number; height: number } | null;
   isRunningDetection: boolean;
   onRunDetection: () => void;
+  categories: string[]; // Added categories prop
 }
 
 export function ImprovedPromptSidebar({
@@ -49,7 +49,8 @@ export function ImprovedPromptSidebar({
   setReferenceImage,
   selectionBox,
   isRunningDetection,
-  onRunDetection
+  onRunDetection,
+  categories
 }: ImprovedPromptSidebarProps) {
   const [activeTab, setActiveTab] = useState("usage");
   const [modelValue, setModelValue] = useState("智拓标注 Pro");

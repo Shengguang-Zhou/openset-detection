@@ -181,6 +181,7 @@ const DatasetDetailPage = () => {
       selectionBox={selectionBox}
       isRunningDetection={isRunningDetection}
       onRunDetection={handleRunDetection}
+      categories={datasetLabels} // Pass the categories to the sidebar
     />
   );
   
