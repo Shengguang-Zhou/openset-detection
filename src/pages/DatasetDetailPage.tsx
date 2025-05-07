@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
@@ -19,6 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { Label as ImageLabel } from "@/hooks/useDummyData"; // Import the Label type
 
 const DatasetDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -144,7 +144,7 @@ const DatasetDetailPage = () => {
         const newLabel = {
           id: `label-auto-${Date.now()}`,
           category: promptMode === "text" ? "文本检测" : promptMode === "image" ? "图像匹配" : "自动检测",
-          type: "rect",
+          type: "rect" as const, // Fix: Use a literal type with 'as const' to ensure type safety
           coordinates: [
             [50, 50],
             [200, 200]
