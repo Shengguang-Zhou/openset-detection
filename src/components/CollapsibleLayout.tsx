@@ -51,8 +51,10 @@ export function CollapsibleLayout({
         className="h-full"
       >
         <div className="flex h-full">
-          <CollapsibleContent className="bg-white h-full border rounded-lg overflow-hidden w-[250px]">
-            {leftSidebar}
+          <CollapsibleContent className="h-full">
+            <div className="bg-white h-full border rounded-lg overflow-hidden w-[250px]">
+              {leftSidebar}
+            </div>
           </CollapsibleContent>
           
           <CollapsibleTrigger asChild>
@@ -98,13 +100,13 @@ export function CollapsibleLayout({
             </Button>
           </CollapsibleTrigger>
           
-          <CollapsibleContent className="h-full flex-col flex">
+          <CollapsibleContent className="h-full">
             {isRightCollapsed && collapsedLabels ? (
               <div className="absolute top-1/4 right-8 z-10 bg-white rounded-lg border shadow-lg p-2">
                 {collapsedLabels}
               </div>
             ) : (
-              <div className="h-full w-[350px]">
+              <div className="bg-white h-full border rounded-lg overflow-hidden w-[250px]">
                 {rightSidebar}
               </div>
             )}

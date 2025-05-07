@@ -28,8 +28,8 @@ export function CanvasDrawing({
         width={selectionBox.width}
         height={selectionBox.height}
         stroke="#F97316"
-        strokeWidth={2}
-        dash={[5, 5]}
+        strokeWidth={1.5}
+        dash={[4, 4]}
         fill="rgba(249, 115, 22, 0.1)"
       />
     );
@@ -49,8 +49,8 @@ export function CanvasDrawing({
         width={width}
         height={height}
         stroke="#F97316"
-        strokeWidth={2}
-        dash={[5, 5]}
+        strokeWidth={1.5}
+        dash={[4, 4]}
       />
     );
   }
@@ -64,9 +64,9 @@ export function CanvasDrawing({
         <Line
           points={flatPoints}
           stroke="#F97316"
-          strokeWidth={2}
+          strokeWidth={1.5}
           closed={false}
-          dash={[5, 5]}
+          dash={[4, 4]}
         />
         {points.length > 2 && (
           <Line
@@ -77,8 +77,8 @@ export function CanvasDrawing({
               points[1],
             ]}
             stroke="#F97316"
-            strokeWidth={2}
-            dash={[5, 5]}
+            strokeWidth={1.5}
+            dash={[4, 4]}
             opacity={0.5}
           />
         )}
@@ -89,7 +89,7 @@ export function CanvasDrawing({
                 key={i}
                 x={flatPoints[i]}
                 y={flatPoints[i + 1]}
-                radius={4}
+                radius={3}
                 fill="#F97316"
               />
             );

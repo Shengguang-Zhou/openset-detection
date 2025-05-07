@@ -1,5 +1,5 @@
 
-import { memo } from "react";
+import { memo, useMemo } from "react";
 import { Label } from "@/hooks/useDummyData";
 import { Circle, Group, Line, Rect, Text } from "react-konva";
 
@@ -11,6 +11,18 @@ interface CanvasLabelsProps {
   onLabelHover: (id: string | null) => void;
 }
 
+// Color palette for different categories
+const COLOR_PALETTE = [
+  "#F97316", // Orange (primary)
+  "#D946EF", // Magenta
+  "#0EA5E9", // Blue
+  "#8B5CF6", // Purple
+  "#10B981", // Green
+  "#EC4899", // Pink
+  "#F59E0B", // Amber
+  "#6366F1"  // Indigo
+];
+
 // Using memo for performance optimization
 export const CanvasLabels = memo(({
   labels,
@@ -19,10 +31,26 @@ export const CanvasLabels = memo(({
   onLabelSelect,
   onLabelHover
 }: CanvasLabelsProps) => {
+  // Generate consistent colors for categories
+  const categoryColors = useMemo(() => {
+    const uniqueCategories = Array.from(new Set(labels.map(label => label.category)));
+    return Object.fromEntries(
+      uniqueCategories.map((category, index) => [
+        category, 
+        COLOR_PALETTE[index % COLOR_PALETTE.length]
+      ])
+    );
+  }, [labels]);
+
   // Helper function to determine fill color
   const getLabelColor = (label: Label, isSelected: boolean, isHighlighted: boolean) => {
-    const baseColor = label.isAiSuggestion ? "#2563EB" : "#F97316";
-    return isSelected || isHighlighted ? baseColor : baseColor;
+    // Use AI suggestion color for AI labels, otherwise use category color
+    if (label.isAiSuggestion) {
+      return "#2563EB";
+    }
+    
+    // Use the category color if available, otherwise default to primary
+    return categoryColors[label.category] || "#F97316";
   };
 
   // Helper function to determine opacity
@@ -34,7 +62,7 @@ export const CanvasLabels = memo(({
     
     // For highlighted or selected labels
     if (isHighlighted || isSelected) {
-      return 0.3; // More visible
+      return 0.25; // More visible
     }
     
     // Default opacity
@@ -68,24 +96,22 @@ export const CanvasLabels = memo(({
                 width={width}
                 height={height}
                 stroke={labelColor}
-                strokeWidth={2}
+                strokeWidth={1.5}
                 fill={labelColor}
                 opacity={opacity}
                 shadowColor="black"
-                shadowBlur={isSelected || isHighlighted ? 5 : 0}
-                shadowOpacity={isSelected || isHighlighted ? 0.5 : 0}
+                shadowBlur={isSelected || isHighlighted ? 4 : 0}
+                shadowOpacity={isSelected || isHighlighted ? 0.4 : 0}
                 perfectDrawEnabled={false}
               />
               <Text
                 x={x1}
-                y={y1 - 20}
+                y={y1 - 18}
                 text={label.category || "未标注"}
-                fontSize={12}
-                padding={5}
+                fontSize={11}
+                padding={4}
                 fill="white"
                 background={labelColor}
-                backgroundStrokeWidth={1}
-                backgroundStroke={labelColor}
                 perfectDrawEnabled={false}
               />
             </Group>
@@ -112,24 +138,22 @@ export const CanvasLabels = memo(({
                 points={points}
                 closed={true}
                 stroke={labelColor}
-                strokeWidth={2}
+                strokeWidth={1.5}
                 fill={labelColor}
                 opacity={opacity}
                 shadowColor="black"
-                shadowBlur={isSelected || isHighlighted ? 5 : 0}
-                shadowOpacity={isSelected || isHighlighted ? 0.5 : 0}
+                shadowBlur={isSelected || isHighlighted ? 4 : 0}
+                shadowOpacity={isSelected || isHighlighted ? 0.4 : 0}
                 perfectDrawEnabled={false}
               />
               <Text
                 x={centerX - 20}
-                y={centerY - 20}
+                y={centerY - 18}
                 text={label.category || "未标注"}
-                fontSize={12}
-                padding={5}
+                fontSize={11}
+                padding={4}
                 fill="white"
                 background={labelColor}
-                backgroundStrokeWidth={1}
-                backgroundStroke={labelColor}
                 perfectDrawEnabled={false}
               />
             </Group>
@@ -149,26 +173,24 @@ export const CanvasLabels = memo(({
               <Circle
                 x={x}
                 y={y}
-                radius={7}
+                radius={6}
                 fill={labelColor}
                 stroke={labelColor}
-                strokeWidth={2}
+                strokeWidth={1.5}
                 opacity={0.7}
                 shadowColor="black"
-                shadowBlur={isSelected || isHighlighted ? 5 : 0}
-                shadowOpacity={isSelected || isHighlighted ? 0.5 : 0}
+                shadowBlur={isSelected || isHighlighted ? 4 : 0}
+                shadowOpacity={isSelected || isHighlighted ? 0.4 : 0}
                 perfectDrawEnabled={false}
               />
               <Text
-                x={x + 10}
-                y={y - 20}
+                x={x + 8}
+                y={y - 18}
                 text={label.category || "未标注"}
-                fontSize={12}
-                padding={5}
+                fontSize={11}
+                padding={4}
                 fill="white"
                 background={labelColor}
-                backgroundStrokeWidth={1}
-                backgroundStroke={labelColor}
                 perfectDrawEnabled={false}
               />
             </Group>
