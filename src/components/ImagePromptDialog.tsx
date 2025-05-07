@@ -109,12 +109,14 @@ export function ImagePromptDialog({
           </div>
           
           <div className="col-span-1 h-[400px]">
-            <MiniLabelPanel 
-              labels={labels}
-              onEditLabel={handleEditLabel}
-              onDeleteLabel={handleDeleteLabel}
-              onAddNewLabel={handleAddNewLabel}
-            />
+            <ColorProvider>
+              <MiniLabelPanel 
+                labels={labels}
+                onEditLabel={handleEditLabel}
+                onDeleteLabel={handleDeleteLabel}
+                onAddNewLabel={handleAddNewLabel}
+              />
+            </ColorProvider>
           </div>
         </div>
         
