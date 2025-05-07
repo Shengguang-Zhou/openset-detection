@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useMemo, ReactNode } from 'react';
+import React, { createContext, useContext, ReactNode } from 'react';
 
 // Color palette for different categories
 const COLOR_PALETTE = [
@@ -13,47 +13,48 @@ const COLOR_PALETTE = [
   "#6366F1"  // Indigo
 ];
 
+// AI suggestion color
+const AI_COLOR = "#2563EB"; // Blue
+
 interface ColorContextType {
   getCategoryColor: (category: string) => string;
   getLabelColor: (category: string, isAiSuggestion: boolean) => string;
-  COLOR_PALETTE: string[];
 }
 
 const ColorContext = createContext<ColorContextType | undefined>(undefined);
 
 export function ColorProvider({ children }: { children: ReactNode }) {
-  // A map to store category -> color mappings
-  const categoryColorMap = useMemo(() => new Map<string, string>(), []);
-
-  // Get a consistent color for a category
+  // Function to deterministically map a category to a color
   const getCategoryColor = (category: string): string => {
-    if (categoryColorMap.has(category)) {
-      return categoryColorMap.get(category)!;
+    // Get a consistent hash for the category
+    let hash = 0;
+    for (let i = 0; i < category.length; i++) {
+      hash = ((hash << 5) - hash) + category.charCodeAt(i);
+      hash |= 0; // Convert to 32bit integer
     }
     
-    // Assign a new color from the palette
-    const newColor = COLOR_PALETTE[categoryColorMap.size % COLOR_PALETTE.length];
-    categoryColorMap.set(category, newColor);
-    return newColor;
+    // Use the hash to select a color from the palette
+    const index = Math.abs(hash) % COLOR_PALETTE.length;
+    return COLOR_PALETTE[index];
   };
-
-  // Get label color, accounting for AI suggestions
+  
+  // Get label color based on whether it's an AI suggestion
   const getLabelColor = (category: string, isAiSuggestion: boolean): string => {
     if (isAiSuggestion) {
-      return "#2563EB"; // AI suggestion blue
+      return AI_COLOR;
     }
     return getCategoryColor(category);
   };
-
+  
   const value = {
     getCategoryColor,
     getLabelColor,
-    COLOR_PALETTE
   };
-
+  
   return <ColorContext.Provider value={value}>{children}</ColorContext.Provider>;
 }
 
+// Custom hook to use color context
 export function useColors() {
   const context = useContext(ColorContext);
   if (context === undefined) {

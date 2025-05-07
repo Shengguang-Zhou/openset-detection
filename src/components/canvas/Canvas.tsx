@@ -48,38 +48,27 @@ export function Canvas({
     isSpacePressed, setIsSpacePressed,
     selectedLabelId, setSelectedLabelId,
     highlightedLabelId, setHighlightedLabelId,
+    pendingLabelCoordinates, setPendingLabelCoordinates,
+    pendingLabelType, setPendingLabelType,
     handleZoomIn, handleZoomOut, handleResetZoom, handleCancelDrawing
   } = useCanvas();
   
-  // New states for label selection dialog
+  // State for label selection dialog
   const [isLabelDialogOpen, setIsLabelDialogOpen] = useState(false);
-  const [pendingLabel, setPendingLabel] = useState<{
-    type: string;
-    coordinates: number[][];
-  } | null>(null);
   
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<any>(null);
   const imageRef = useRef<HTMLImageElement>(new Image());
   const { toast } = useToast();
 
-  // Handle when a label has been created and needs category
-  const handleLabelCreated = useCallback((labelType: string, coordinates: number[][]) => {
-    setPendingLabel({
-      type: labelType,
-      coordinates
-    });
-    setIsLabelDialogOpen(true);
-  }, []);
-
   // Handle label selection from dialog
   const handleLabelSelected = useCallback((category: string) => {
-    if (!pendingLabel) return;
+    if (!pendingLabelCoordinates || !pendingLabelType) return;
     
     const newLabel = {
       category,
-      type: pendingLabel.type as "rect" | "polygon" | "point",
-      coordinates: pendingLabel.coordinates,
+      type: pendingLabelType,
+      coordinates: pendingLabelCoordinates,
     };
     
     onAddLabel(newLabel);
@@ -89,8 +78,11 @@ export function Canvas({
       description: `已成功添加「${category}」标签`,
     });
     
-    setPendingLabel(null);
-  }, [pendingLabel, onAddLabel, toast]);
+    // Reset pending label state
+    setPendingLabelCoordinates(null);
+    setPendingLabelType(null);
+    setIsLabelDialogOpen(false);
+  }, [pendingLabelCoordinates, pendingLabelType, onAddLabel, setPendingLabelCoordinates, setPendingLabelType, toast]);
 
   // Handle label update (coordinates)
   const handleLabelCoordinatesUpdate = useCallback((labelId: string, newCoordinates: number[][]) => {
@@ -121,11 +113,22 @@ export function Canvas({
     return () => window.removeEventListener("resize", updateSize);
   }, [updateSize]);
 
-  // Loading image
+  // Loading image with proper error handling
   useEffect(() => {
     const img = imageRef.current;
-    img.src = image.thumbnail || "https://picsum.photos/800/600";
+    if (!image?.thumbnail) {
+      setIsImageLoaded(false);
+      return;
+    }
+
+    // Reset image loading state
+    setIsImageLoaded(false);
+    
+    // Use the actual image URL from the image prop
+    img.src = image.thumbnail;
+    
     img.onload = () => {
+      console.log("Image loaded successfully:", img.width, img.height);
       setIsImageLoaded(true);
       
       // Calculate appropriate scale to fit the stage
@@ -141,7 +144,9 @@ export function Canvas({
         });
       }
     };
-    img.onerror = () => {
+    
+    img.onerror = (error) => {
+      console.error("Image failed to load:", error);
       toast({
         variant: "destructive",
         title: "图像加载失败",
@@ -149,7 +154,7 @@ export function Canvas({
       });
       setIsImageLoaded(false);
     };
-  }, [image.thumbnail, stageSize, toast, setIsImageLoaded, setScale, setPosition]);
+  }, [image?.thumbnail, stageSize, toast, setIsImageLoaded, setScale, setPosition]);
 
   // Set up canvas interactions
   const handleMouseDown = useCallback((e: any) => {
@@ -200,12 +205,15 @@ export function Canvas({
       setPoints([(point.x - position.x) / scale, (point.y - position.y) / scale]);
       setDrawing(true);
       
-      // For point, immediately create label after click
-      handleLabelCreated("point", [[(point.x - position.x) / scale, (point.y - position.y) / scale]]);
+      // For point, immediately get ready for label selection
+      const pointCoordinates = [[(point.x - position.x) / scale, (point.y - position.y) / scale]];
+      setPendingLabelType("point");
+      setPendingLabelCoordinates(pointCoordinates);
+      setIsLabelDialogOpen(true);
       setDrawing(false);
       setPoints([]);
     }
-  }, [isImageLoaded, isSpacePressed, tool, isSelectMode, position, scale, drawing, points, setIsDragging, setSelectionBox, setDrawing, setPoints, handleLabelCreated]);
+  }, [isImageLoaded, isSpacePressed, tool, isSelectMode, position, scale, drawing, points, setIsDragging, setSelectionBox, setDrawing, setPoints, setPendingLabelType, setPendingLabelCoordinates]);
 
   const handleMouseMove = useCallback((e: any) => {
     if (!drawing || !isImageLoaded) return;
@@ -271,7 +279,15 @@ export function Canvas({
         
         // Only create if rectangle has some size
         if (Math.abs(x2 - x1) > 5 && Math.abs(y2 - y1) > 5) {
-          handleLabelCreated("rect", [[x1, y1], [x2, y2]]);
+          // Prepare coordinates for label dialog
+          const rectCoordinates = [
+            [Math.min(x1, x2), Math.min(y1, y2)],
+            [Math.max(x1, x2), Math.max(y1, y2)]
+          ];
+          
+          setPendingLabelType("rect");
+          setPendingLabelCoordinates(rectCoordinates);
+          setIsLabelDialogOpen(true);
         }
         
         setDrawing(false);
@@ -280,7 +296,7 @@ export function Canvas({
     }
     
     setIsDragging(false);
-  }, [isSpacePressed, tool, isSelectMode, drawing, selectionBox, points, onSelectRegion, setIsDragging, setDrawing, setPoints, handleLabelCreated]);
+  }, [isSpacePressed, tool, isSelectMode, drawing, selectionBox, points, onSelectRegion, setIsDragging, setDrawing, setPoints, setPendingLabelType, setPendingLabelCoordinates]);
 
   const handleDblClick = useCallback((e: any) => {
     if (tool === "polygon" && drawing) {
@@ -291,13 +307,15 @@ export function Canvas({
           formattedPoints.push([points[i], points[i + 1]]);
         }
         
-        handleLabelCreated("polygon", formattedPoints);
+        setPendingLabelType("polygon");
+        setPendingLabelCoordinates(formattedPoints);
+        setIsLabelDialogOpen(true);
       }
       
       setDrawing(false);
       setPoints([]);
     }
-  }, [tool, drawing, points, setDrawing, setPoints, handleLabelCreated]);
+  }, [tool, drawing, points, setDrawing, setPoints, setPendingLabelType, setPendingLabelCoordinates]);
 
   const handleWheel = useCallback((e: any) => {
     e.evt.preventDefault();
@@ -405,11 +423,27 @@ export function Canvas({
       {/* Canvas controls */}
       <CanvasControls 
         isSelectMode={isSelectMode}
+        tool={tool}
+        setTool={setTool}
         onCancelDrawing={() => handleCancelDrawing(isSelectMode)}
         onZoomIn={handleZoomIn}
         onZoomOut={handleZoomOut}
         onResetZoom={() => handleResetZoom(imageRef.current.width, imageRef.current.height)}
       />
+
+      {/* Annotation tip */}
+      {drawing && tool === "polygon" && !isSelectMode && (
+        <div className="absolute top-16 left-1/2 transform -translate-x-1/2 z-10 bg-white shadow-md rounded-lg px-3 py-1 text-sm">
+          单击添加点，双击完成
+        </div>
+      )}
+      
+      {/* Space key tip */}
+      {isSpacePressed && (
+        <div className="absolute top-16 left-1/2 transform -translate-x-1/2 z-10 bg-white shadow-md rounded-lg px-3 py-1 text-sm">
+          空格键移动模式
+        </div>
+      )}
 
       {/* Konva stage */}
       <Stage
@@ -456,13 +490,6 @@ export function Canvas({
         </Layer>
       </Stage>
 
-      {/* Space key tip */}
-      {isSpacePressed && (
-        <div className="absolute top-16 left-1/2 transform -translate-x-1/2 z-10 bg-white shadow-md rounded-lg px-3 py-1 text-sm">
-          空格键移动模式
-        </div>
-      )}
-
       {/* Loading indicator */}
       {!isImageLoaded && (
         <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
@@ -478,7 +505,8 @@ export function Canvas({
         isOpen={isLabelDialogOpen}
         onClose={() => {
           setIsLabelDialogOpen(false);
-          setPendingLabel(null);
+          setPendingLabelCoordinates(null);
+          setPendingLabelType(null);
         }}
         onSelectLabel={handleLabelSelected}
         existingLabels={categories}

@@ -1,5 +1,5 @@
 
-import { memo, useMemo } from "react";
+import { memo, useState } from "react";
 import { Label } from "@/hooks/useDummyData";
 import { Circle, Group, Line, Rect, Text, Transformer } from "react-konva";
 import { useColors } from "@/contexts/ColorContext";
@@ -25,7 +25,7 @@ export const CanvasLabels = memo(({
   onLabelDelete
 }: CanvasLabelsProps) => {
   const [isTransforming, setIsTransforming] = useState(false);
-  const { getCategoryColor, getLabelColor } = useColors();
+  const { getLabelColor } = useColors();
   
   // Helper function to determine opacity
   const getLabelOpacity = (isSelected: boolean, isHighlighted: boolean, labelId: string) => {
@@ -296,5 +296,3 @@ export const CanvasLabels = memo(({
 });
 
 CanvasLabels.displayName = "CanvasLabels";
-
-import { useState } from "react";

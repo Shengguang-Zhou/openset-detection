@@ -3,8 +3,9 @@ import { useEffect, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
-import { X } from "lucide-react";
+import { X, Plus, Search } from "lucide-react";
 import { ScrollArea } from "./ui/scroll-area";
+import { Badge } from "./ui/badge";
 
 interface LabelSelectionDialogProps {
   isOpen: boolean;
@@ -24,10 +25,12 @@ export default function LabelSelectionDialog({
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (isOpen && inputRef.current) {
-      inputRef.current.focus();
+    // Reset the input and update the filtered labels when the dialog opens
+    if (isOpen) {
+      setNewLabel("");
+      setFilteredLabels(existingLabels);
+      setTimeout(() => inputRef.current?.focus(), 100);
     }
-    setFilteredLabels(existingLabels);
   }, [isOpen, existingLabels]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -41,13 +44,11 @@ export default function LabelSelectionDialog({
 
   const handleSelectExisting = (label: string) => {
     onSelectLabel(label);
-    onClose();
   };
 
   const handleAddNew = () => {
     if (newLabel.trim()) {
       onSelectLabel(newLabel.trim());
-      onClose();
     }
   };
 
@@ -60,59 +61,69 @@ export default function LabelSelectionDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>选择或创建标签</DialogTitle>
+          <DialogTitle>选择标签类别</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4">
-          <div className="relative">
-            <Input
-              ref={inputRef}
-              value={newLabel}
-              onChange={handleInputChange}
-              onKeyDown={handleKeyDown}
-              placeholder="搜索已有标签或创建新标签"
-              className="pr-10"
-            />
-            {newLabel && (
-              <button 
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-500"
-                onClick={() => setNewLabel("")}
-              >
-                <X size={16} />
-              </button>
-            )}
+        
+        <div className="space-y-4 pt-2">
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
+              <Input
+                ref={inputRef}
+                placeholder="输入新标签或选择现有标签"
+                value={newLabel}
+                onChange={handleInputChange}
+                onKeyDown={handleKeyDown}
+                className="pl-8"
+              />
+            </div>
+            <Button onClick={handleAddNew} disabled={!newLabel.trim()}>
+              <Plus className="h-4 w-4 mr-1" />
+              添加
+            </Button>
           </div>
           
-          {filteredLabels.length > 0 && (
-            <div className="border rounded-md">
+          {existingLabels.length > 0 ? (
+            <div>
+              <div className="text-sm text-gray-500 mb-2">现有标签</div>
               <ScrollArea className="max-h-60">
-                <div className="p-1 grid grid-cols-2 gap-1">
+                <div className="flex flex-wrap gap-2">
                   {filteredLabels.map((label) => (
-                    <button
+                    <Badge
                       key={label}
-                      className="text-left px-3 py-2 rounded-md hover:bg-orange-50 hover:text-primary transition-colors"
+                      className="cursor-pointer hover:bg-primary hover:text-white transition-colors"
+                      variant="outline"
                       onClick={() => handleSelectExisting(label)}
                     >
                       {label}
-                    </button>
+                    </Badge>
                   ))}
                 </div>
+                {filteredLabels.length === 0 && (
+                  <div className="text-center py-4 text-sm text-gray-500">
+                    没有找到匹配的标签
+                  </div>
+                )}
               </ScrollArea>
             </div>
-          )}
-          
-          {newLabel.trim() && !existingLabels.includes(newLabel.trim()) && (
-            <div className="flex items-center gap-2 pt-1">
-              <Button 
-                variant="outline" 
-                className="w-full border-dashed border-primary text-primary" 
-                onClick={handleAddNew}
-              >
-                创建新标签 "{newLabel}"
-              </Button>
+          ) : (
+            <div className="text-center py-4 text-sm text-gray-500">
+              没有现有标签。请输入一个新标签。
             </div>
           )}
+        </div>
+        
+        <div className="flex justify-end">
+          <Button 
+            variant="ghost" 
+            onClick={onClose}
+            className="mr-2"
+          >
+            <X className="h-4 w-4 mr-1" />
+            取消
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

@@ -32,6 +32,12 @@ interface CanvasContextType {
   selectionBox: { x: number; y: number; width: number; height: number } | null;
   setSelectionBox: (box: { x: number; y: number; width: number; height: number } | null) => void;
   
+  // New fields for pending label (before category selection)
+  pendingLabelCoordinates: number[][] | null;
+  setPendingLabelCoordinates: (coordinates: number[][] | null) => void;
+  pendingLabelType: "rect" | "polygon" | "point" | null;
+  setPendingLabelType: (type: "rect" | "polygon" | "point" | null) => void;
+  
   // Canvas utility functions
   resetDrawing: () => void;
   handleZoomIn: () => void;
@@ -65,6 +71,10 @@ export function CanvasProvider({ children }: { children: ReactNode }) {
   
   // Selection box for reference image mode
   const [selectionBox, setSelectionBox] = useState<{x: number, y: number, width: number, height: number} | null>(null);
+  
+  // New state for pending label (before category selection)
+  const [pendingLabelCoordinates, setPendingLabelCoordinates] = useState<number[][] | null>(null);
+  const [pendingLabelType, setPendingLabelType] = useState<"rect" | "polygon" | "point" | null>(null);
 
   // Wrapper for setTool that also updates lastUsedTool
   const setTool = useCallback((newTool: "select" | "rect" | "polygon" | "point" | "move") => {
@@ -138,6 +148,8 @@ export function CanvasProvider({ children }: { children: ReactNode }) {
   const handleCancelDrawing = useCallback((isSelectMode: boolean) => {
     setDrawing(false);
     setPoints([]);
+    setPendingLabelCoordinates(null);
+    setPendingLabelType(null);
     
     if (isSelectMode) {
       setSelectionBox(null);
@@ -169,6 +181,10 @@ export function CanvasProvider({ children }: { children: ReactNode }) {
     setHighlightedLabelId,
     selectionBox,
     setSelectionBox,
+    pendingLabelCoordinates,
+    setPendingLabelCoordinates,
+    pendingLabelType,
+    setPendingLabelType,
     stageSize,
     setStageSize,
     

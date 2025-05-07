@@ -1,11 +1,12 @@
 
-import React from "react";
+import { MousePointer, Square, Hexagon, Circle, Move, ZoomIn, ZoomOut, RotateCcw, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useCanvas } from "@/contexts/CanvasContext";
-import { RectangleHorizontal, Pencil, Move, ZoomIn, ZoomOut, RefreshCw } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface CanvasControlsProps {
-  isSelectMode: boolean;
+  isSelectMode?: boolean;
+  tool: "select" | "rect" | "polygon" | "point" | "move";
+  setTool?: (tool: "select" | "rect" | "polygon" | "point" | "move") => void;
   onCancelDrawing: () => void;
   onZoomIn: () => void;
   onZoomOut: () => void;
@@ -13,160 +14,131 @@ interface CanvasControlsProps {
 }
 
 export function CanvasControls({
-  isSelectMode,
+  isSelectMode = false,
+  tool,
+  setTool,
   onCancelDrawing,
   onZoomIn,
   onZoomOut,
   onResetZoom
 }: CanvasControlsProps) {
-  const {
-    tool,
-    setTool,
-    drawing,
-    selectedLabelId,
-    setSelectedLabelId,
-    isSpacePressed
-  } = useCanvas();
-  
-  // Handle deleting the currently selected label
-  const handleDeleteSelected = () => {
-    if (!selectedLabelId) return;
-    
-    // This function will need to be implemented by a parent component
-    // and passed through as a prop, but for now we'll just clear the selection
-    setSelectedLabelId(null);
-  };
-  
   return (
-    <>
-      {/* Toolbar */}
-      <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10 bg-white shadow-md rounded-lg p-1 flex space-x-1">
-        {isSelectMode ? (
-          <div className="flex items-center px-2 text-sm text-primary font-medium">
-            请框选图像区域作为参考
-          </div>
-        ) : (
-          <>
-            <Button
-              size="icon"
-              variant={tool === "select" ? "default" : "outline"}
-              onClick={() => setTool("select")}
-              className={tool === "select" ? "bg-primary hover:bg-primary/90" : ""}
-            >
-              <span className="sr-only">选择</span>
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
-              </svg>
-            </Button>
-            <Button
-              size="icon"
-              variant={tool === "rect" ? "default" : "outline"}
-              onClick={() => setTool("rect")}
-              className={tool === "rect" ? "bg-primary hover:bg-primary/90" : ""}
-            >
-              <span className="sr-only">矩形</span>
-              <RectangleHorizontal size={16} />
-            </Button>
-            <Button
-              size="icon"
-              variant={tool === "polygon" ? "default" : "outline"}
-              onClick={() => setTool("polygon")}
-              className={tool === "polygon" ? "bg-primary hover:bg-primary/90" : ""}
-            >
-              <span className="sr-only">多边形</span>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 4l7 4v8l-7 4-7-4V8l7-4z" />
-              </svg>
-            </Button>
-            <Button
-              size="icon"
-              variant={tool === "point" ? "default" : "outline"}
-              onClick={() => setTool("point")}
-              className={tool === "point" ? "bg-primary hover:bg-primary/90" : ""}
-            >
-              <span className="sr-only">点</span>
-              <Pencil size={16} />
-            </Button>
-            <Button
-              size="icon"
-              variant={tool === "move" ? "default" : "outline"}
-              onClick={() => setTool("move")}
-              className={tool === "move" ? "bg-primary hover:bg-primary/90" : ""}
-            >
-              <span className="sr-only">移动</span>
-              <Move size={16} />
-            </Button>
-          </>
-        )}
-        
-        {selectedLabelId && !isSelectMode && (
+    <div className="absolute top-3 left-1/2 transform -translate-x-1/2 z-10 flex gap-1 bg-white shadow-md rounded-lg p-1 select-none">
+      {/* Drawing tools */}
+      {!isSelectMode && setTool && (
+        <>
           <Button
-            size="icon"
-            variant="outline"
-            onClick={handleDeleteSelected}
-            className="border-red-500 hover:bg-red-50 text-red-500"
+            type="button"
+            size="sm"
+            variant={tool === "select" ? "default" : "ghost"}
+            className={cn(
+              "h-8 px-2",
+              tool === "select" ? "bg-primary text-white" : "text-gray-700"
+            )}
+            onClick={() => setTool("select")}
           >
-            <span className="sr-only">删除</span>
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M3 6h18"></path>
-              <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
-              <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
-              <line x1="10" y1="11" x2="10" y2="17"></line>
-              <line x1="14" y1="11" x2="14" y2="17"></line>
-            </svg>
+            <MousePointer className="h-4 w-4" />
           </Button>
-        )}
-        
-        {drawing && (
+          
           <Button
-            size="icon"
-            variant="outline"
-            onClick={onCancelDrawing}
-            className="border-red-500 hover:bg-red-50 text-red-500"
+            type="button"
+            size="sm"
+            variant={tool === "rect" ? "default" : "ghost"}
+            className={cn(
+              "h-8 px-2",
+              tool === "rect" ? "bg-primary text-white" : "text-gray-700"
+            )}
+            onClick={() => setTool("rect")}
           >
-            <span className="sr-only">取消</span>
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
+            <Square className="h-4 w-4" />
           </Button>
-        )}
-      </div>
+          
+          <Button
+            type="button"
+            size="sm"
+            variant={tool === "polygon" ? "default" : "ghost"}
+            className={cn(
+              "h-8 px-2",
+              tool === "polygon" ? "bg-primary text-white" : "text-gray-700"
+            )}
+            onClick={() => setTool("polygon")}
+          >
+            <Hexagon className="h-4 w-4" />
+          </Button>
+          
+          <Button
+            type="button"
+            size="sm"
+            variant={tool === "point" ? "default" : "ghost"}
+            className={cn(
+              "h-8 px-2",
+              tool === "point" ? "bg-primary text-white" : "text-gray-700"
+            )}
+            onClick={() => setTool("point")}
+          >
+            <Circle className="h-4 w-4" />
+          </Button>
+          
+          <Button
+            type="button"
+            size="sm"
+            variant={tool === "move" ? "default" : "ghost"}
+            className={cn(
+              "h-8 px-2",
+              tool === "move" ? "bg-primary text-white" : "text-gray-700"
+            )}
+            onClick={() => setTool("move")}
+          >
+            <Move className="h-4 w-4" />
+          </Button>
+          
+          <div className="w-px h-8 bg-gray-300 mx-1"></div>
+        </>
+      )}
       
       {/* Zoom controls */}
-      <div className="absolute bottom-4 right-4 z-10 bg-white shadow-md rounded-lg p-1 flex flex-col space-y-1">
-        <Button
-          size="icon"
-          variant="outline"
-          onClick={onZoomIn}
-          className="h-8 w-8"
-        >
-          <ZoomIn size={16} />
-        </Button>
-        <Button
-          size="icon"
-          variant="outline"
-          onClick={onZoomOut}
-          className="h-8 w-8"
-        >
-          <ZoomOut size={16} />
-        </Button>
-        <Button
-          size="icon"
-          variant="outline"
-          onClick={onResetZoom}
-          className="h-8 w-8"
-        >
-          <RefreshCw size={16} />
-        </Button>
-      </div>
+      <Button
+        type="button"
+        size="sm"
+        variant="ghost"
+        className="h-8 px-2 text-gray-700"
+        onClick={onZoomIn}
+      >
+        <ZoomIn className="h-4 w-4" />
+      </Button>
       
-      {/* Annotation tip */}
-      {drawing && tool === "polygon" && !isSelectMode && (
-        <div className="absolute top-16 left-1/2 transform -translate-x-1/2 z-10 bg-white shadow-md rounded-lg px-3 py-1 text-sm">
-          单击添加点，双击完成
-        </div>
+      <Button
+        type="button"
+        size="sm"
+        variant="ghost"
+        className="h-8 px-2 text-gray-700"
+        onClick={onZoomOut}
+      >
+        <ZoomOut className="h-4 w-4" />
+      </Button>
+      
+      <Button
+        type="button"
+        size="sm"
+        variant="ghost"
+        className="h-8 px-2 text-gray-700"
+        onClick={onResetZoom}
+      >
+        <RotateCcw className="h-4 w-4" />
+      </Button>
+      
+      {/* Cancel button (visible during drawing) */}
+      {isSelectMode && (
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          className="h-8 px-2 text-red-600 hover:bg-red-50 hover:text-red-700"
+          onClick={onCancelDrawing}
+        >
+          <X className="h-4 w-4" />
+        </Button>
       )}
-    </>
+    </div>
   );
 }

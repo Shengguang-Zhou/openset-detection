@@ -77,7 +77,7 @@ const CanvasArea = ({
               <Canvas
                 image={{
                   ...selectedImage,
-                  thumbnail: selectedImage.thumbnail || `https://picsum.photos/200/200?random=${selectedImage.id}`
+                  thumbnail: selectedImage.thumbnail || `https://picsum.photos/800/600?random=${selectedImage.id}`
                 } as Image}
                 categories={categories}
                 onAddLabel={onAddLabel}
