@@ -8,6 +8,7 @@ interface CanvasAreaProps {
   selectedImage: {
     id: string;
     fileName: string;
+    thumbnail?: string; // Make thumbnail optional
     osdFlag: 'unknown' | 'reviewed' | 'clean';
     labels: ImageLabel[];
   } | null;
