@@ -195,6 +195,8 @@ const DatasetDetailPage = () => {
       onDeleteLabel={handleLabelDelete}
       onSelectRegion={setSelectionBox}
       setActiveRightPanel={setActiveRightPanel}
+      highlightedLabelId={highlightedLabelId}
+      setHighlightedLabelId={setHighlightedLabelId}
     />
   );
   
@@ -214,7 +216,7 @@ const DatasetDetailPage = () => {
     />
   );
 
-  // Collapsed labels view
+  // Collapsed labels view that only shows when right sidebar is collapsed
   const collapsedLabels = selectedImage ? (
     <CollapsedLabelView 
       labels={selectedImage.labels} 
@@ -246,7 +248,7 @@ const DatasetDetailPage = () => {
             
             <Button
               variant="outline"
-              onClick={() => handleRunOsd()}
+              onClick={handleRunOsd}
               disabled={dataset.osdStatus === 'running' || isRunningDetection}
               className={dataset.osdStatus === 'done' ? "bg-orange-50 text-primary border-primary hover:bg-orange-100" : ""}
             >

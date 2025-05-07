@@ -20,7 +20,7 @@ interface CanvasInteractionsProps {
   setIsDragging: (dragging: boolean) => void;
   isSpacePressed: boolean;
   onAddLabel: (label: any) => void;
-  onLabelCreated: (labelType: string, coordinates: any) => void; // New callback
+  onLabelCreated: (labelType: string, coordinates: any) => void; // Callback
   onSelectRegion?: (region: { x: number; y: number; width: number; height: number }) => void;
 }
 
@@ -207,7 +207,7 @@ export function useCanvasInteractions({
 
       setDrawing(false);
       setPoints([]);
-      // Don't change the tool to select after creation
+      // Note: We don't change the tool to select after creation - user can continue with same tool
     }
   }, [isSelectMode, tool, drawing, isDragging, points, selectionBox, onLabelCreated, onSelectRegion, setDrawing, setIsDragging, setPoints, setSelectionBox]);
 
@@ -227,7 +227,7 @@ export function useCanvasInteractions({
 
     setDrawing(false);
     setPoints([]);
-    // Don't change the tool to select after creation
+    // Note: We don't change the tool to select after creation - user can continue with same tool
   }, [tool, drawing, points, onLabelCreated, setDrawing, setPoints]);
 
   // Handle wheel event for zooming

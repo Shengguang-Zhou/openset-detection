@@ -45,14 +45,14 @@ export function CollapsibleLayout({
   
   return (
     <div className="flex h-full w-full">
-      {/* Left sidebar with collapse button */}
+      {/* Left sidebar - Pinned to left edge */}
       <Collapsible 
         open={!isLeftCollapsed} 
         className="h-full"
       >
         <div className="flex h-full">
           <CollapsibleContent className="h-full">
-            <div className="bg-white h-full border rounded-lg overflow-hidden w-[250px]">
+            <div className="bg-white h-full border rounded-r-lg overflow-hidden w-[250px]">
               {leftSidebar}
             </div>
           </CollapsibleContent>
@@ -61,7 +61,7 @@ export function CollapsibleLayout({
             <Button 
               variant="ghost" 
               size="icon"
-              className="h-10 w-6 -ml-3 z-10 rounded-l-none rounded-r-xl bg-primary/10 hover:bg-primary/20"
+              className="h-10 w-6 z-10 rounded-l-none rounded-r-xl bg-primary/10 hover:bg-primary/20"
               onClick={() => setIsLeftCollapsed(!isLeftCollapsed)}
             >
               {isLeftCollapsed ? (
@@ -74,12 +74,19 @@ export function CollapsibleLayout({
         </div>
       </Collapsible>
       
-      {/* Main content area */}
-      <div className="flex-1 transition-all mx-3">
-        {mainContent}
+      {/* Main content area with top label panel when right sidebar is collapsed */}
+      <div className="flex-1 flex flex-col transition-all mx-3">
+        {isRightCollapsed && collapsedLabels && (
+          <div className="mb-3 bg-white/90 rounded-lg border p-3 shadow-sm">
+            {collapsedLabels}
+          </div>
+        )}
+        <div className={`flex-1 ${isRightCollapsed && collapsedLabels ? "" : "h-full"}`}>
+          {mainContent}
+        </div>
       </div>
       
-      {/* Right sidebar with collapse button */}
+      {/* Right sidebar - Pinned to right edge */}
       <Collapsible 
         open={!isRightCollapsed} 
         className="h-full"
@@ -89,7 +96,7 @@ export function CollapsibleLayout({
             <Button 
               variant="ghost" 
               size="icon"
-              className="h-10 w-6 -mr-3 z-10 rounded-r-none rounded-l-xl bg-primary/10 hover:bg-primary/20"
+              className="h-10 w-6 z-10 rounded-r-none rounded-l-xl bg-primary/10 hover:bg-primary/20"
               onClick={() => setIsRightCollapsed(!isRightCollapsed)}
             >
               {isRightCollapsed ? (
@@ -101,15 +108,9 @@ export function CollapsibleLayout({
           </CollapsibleTrigger>
           
           <CollapsibleContent className="h-full">
-            {isRightCollapsed && collapsedLabels ? (
-              <div className="absolute top-1/4 right-8 z-10 bg-white rounded-lg border shadow-lg p-2">
-                {collapsedLabels}
-              </div>
-            ) : (
-              <div className="bg-white h-full border rounded-lg overflow-hidden w-[250px]">
-                {rightSidebar}
-              </div>
-            )}
+            <div className="bg-white h-full border rounded-l-lg overflow-hidden w-[250px]">
+              {rightSidebar}
+            </div>
           </CollapsibleContent>
         </div>
       </Collapsible>

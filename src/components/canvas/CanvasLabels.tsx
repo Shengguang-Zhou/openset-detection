@@ -43,7 +43,7 @@ export const CanvasLabels = memo(({
   }, [labels]);
 
   // Helper function to determine fill color
-  const getLabelColor = (label: Label, isSelected: boolean, isHighlighted: boolean) => {
+  const getLabelColor = (label: Label) => {
     // Use AI suggestion color for AI labels, otherwise use category color
     if (label.isAiSuggestion) {
       return "#2563EB";
@@ -74,7 +74,7 @@ export const CanvasLabels = memo(({
       {labels.map((label) => {
         const isSelected = selectedLabelId === label.id;
         const isHighlighted = highlightedLabelId === label.id;
-        const labelColor = getLabelColor(label, isSelected, isHighlighted);
+        const labelColor = getLabelColor(label);
         const opacity = getLabelOpacity(isSelected, isHighlighted, label.id);
         
         if (label.type === "rect" && label.coordinates?.length === 2) {
@@ -96,7 +96,7 @@ export const CanvasLabels = memo(({
                 width={width}
                 height={height}
                 stroke={labelColor}
-                strokeWidth={1.5}
+                strokeWidth={1}
                 fill={labelColor}
                 opacity={opacity}
                 shadowColor="black"
@@ -106,10 +106,10 @@ export const CanvasLabels = memo(({
               />
               <Text
                 x={x1}
-                y={y1 - 18}
+                y={y1 - 16}
                 text={label.category || "未标注"}
-                fontSize={11}
-                padding={4}
+                fontSize={10}
+                padding={3}
                 fill="white"
                 background={labelColor}
                 perfectDrawEnabled={false}
@@ -138,7 +138,7 @@ export const CanvasLabels = memo(({
                 points={points}
                 closed={true}
                 stroke={labelColor}
-                strokeWidth={1.5}
+                strokeWidth={1}
                 fill={labelColor}
                 opacity={opacity}
                 shadowColor="black"
@@ -148,10 +148,10 @@ export const CanvasLabels = memo(({
               />
               <Text
                 x={centerX - 20}
-                y={centerY - 18}
+                y={centerY - 16}
                 text={label.category || "未标注"}
-                fontSize={11}
-                padding={4}
+                fontSize={10}
+                padding={3}
                 fill="white"
                 background={labelColor}
                 perfectDrawEnabled={false}
@@ -173,10 +173,10 @@ export const CanvasLabels = memo(({
               <Circle
                 x={x}
                 y={y}
-                radius={6}
+                radius={4}
                 fill={labelColor}
                 stroke={labelColor}
-                strokeWidth={1.5}
+                strokeWidth={1}
                 opacity={0.7}
                 shadowColor="black"
                 shadowBlur={isSelected || isHighlighted ? 4 : 0}
@@ -184,11 +184,11 @@ export const CanvasLabels = memo(({
                 perfectDrawEnabled={false}
               />
               <Text
-                x={x + 8}
-                y={y - 18}
+                x={x + 6}
+                y={y - 16}
                 text={label.category || "未标注"}
-                fontSize={11}
-                padding={4}
+                fontSize={10}
+                padding={3}
                 fill="white"
                 background={labelColor}
                 perfectDrawEnabled={false}
