@@ -1,6 +1,5 @@
 
 import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
-import { Label } from '@/hooks/useDummyData';
 
 // Define the context state and actions
 interface CanvasContextType {

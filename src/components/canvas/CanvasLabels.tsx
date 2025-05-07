@@ -1,6 +1,8 @@
-import { memo, useMemo, useState } from "react";
+
+import { memo, useMemo } from "react";
 import { Label } from "@/hooks/useDummyData";
 import { Circle, Group, Line, Rect, Text, Transformer } from "react-konva";
+import { useColors } from "@/contexts/ColorContext";
 
 interface CanvasLabelsProps {
   labels: Label[];
@@ -11,18 +13,6 @@ interface CanvasLabelsProps {
   onLabelUpdate?: (id: string, newCoordinates: number[][]) => void;
   onLabelDelete?: (id: string) => void;
 }
-
-// Color palette for different categories
-const COLOR_PALETTE = [
-  "#F97316", // Orange (primary)
-  "#D946EF", // Magenta
-  "#0EA5E9", // Blue
-  "#8B5CF6", // Purple
-  "#10B981", // Green
-  "#EC4899", // Pink
-  "#F59E0B", // Amber
-  "#6366F1"  // Indigo
-];
 
 // Using memo for performance optimization
 export const CanvasLabels = memo(({
@@ -35,29 +25,8 @@ export const CanvasLabels = memo(({
   onLabelDelete
 }: CanvasLabelsProps) => {
   const [isTransforming, setIsTransforming] = useState(false);
+  const { getCategoryColor, getLabelColor } = useColors();
   
-  // Generate consistent colors for categories
-  const categoryColors = useMemo(() => {
-    const uniqueCategories = Array.from(new Set(labels.map(label => label.category)));
-    return Object.fromEntries(
-      uniqueCategories.map((category, index) => [
-        category, 
-        COLOR_PALETTE[index % COLOR_PALETTE.length]
-      ])
-    );
-  }, [labels]);
-
-  // Helper function to determine fill color
-  const getLabelColor = (label: Label) => {
-    // Use AI suggestion color for AI labels, otherwise use category color
-    if (label.isAiSuggestion) {
-      return "#2563EB";
-    }
-    
-    // Use the category color if available, otherwise default to primary
-    return categoryColors[label.category] || "#F97316";
-  };
-
   // Helper function to determine opacity
   const getLabelOpacity = (isSelected: boolean, isHighlighted: boolean, labelId: string) => {
     // When a label is highlighted, make all other labels more transparent
@@ -79,7 +48,7 @@ export const CanvasLabels = memo(({
       {labels.map((label) => {
         const isSelected = selectedLabelId === label.id;
         const isHighlighted = highlightedLabelId === label.id;
-        const labelColor = getLabelColor(label);
+        const labelColor = getLabelColor(label.category, label.isAiSuggestion || false);
         const opacity = getLabelOpacity(isSelected, isHighlighted, label.id);
         
         if (label.type === "rect" && label.coordinates?.length === 2) {
@@ -327,3 +296,5 @@ export const CanvasLabels = memo(({
 });
 
 CanvasLabels.displayName = "CanvasLabels";
+
+import { useState } from "react";

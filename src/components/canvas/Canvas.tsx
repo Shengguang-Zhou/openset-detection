@@ -45,7 +45,7 @@ export function Canvas({
     isImageLoaded, setIsImageLoaded,
     selectionBox, setSelectionBox,
     isDragging, setIsDragging,
-    isSpacePressed,
+    isSpacePressed, setIsSpacePressed,
     selectedLabelId, setSelectedLabelId,
     highlightedLabelId, setHighlightedLabelId,
     handleZoomIn, handleZoomOut, handleResetZoom, handleCancelDrawing
@@ -437,8 +437,12 @@ export function Canvas({
           {/* Labels */}
           <CanvasLabels 
             labels={image.labels}
-            onUpdateLabel={handleLabelCoordinatesUpdate}
-            onDeleteLabel={onDeleteLabel}
+            selectedLabelId={selectedLabelId}
+            highlightedLabelId={highlightedLabelId}
+            onLabelSelect={setSelectedLabelId}
+            onLabelHover={setHighlightedLabelId}
+            onLabelUpdate={handleLabelCoordinatesUpdate}
+            onLabelDelete={onDeleteLabel}
           />
           
           {/* Current drawing shape or selection box */}
