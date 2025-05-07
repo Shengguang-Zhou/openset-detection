@@ -73,6 +73,9 @@ export function ImagePromptDialog({
     // We could add code here to communicate with the Canvas component
   };
 
+  // Check if image URL is valid
+  const isValidImageUrl = imageUrl && (imageUrl.startsWith('http') || imageUrl.startsWith('data:') || imageUrl.startsWith('/'));
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-5xl p-0">
@@ -88,7 +91,7 @@ export function ImagePromptDialog({
                   image={{
                     id: "prompt-image",
                     fileName: "参考图像",
-                    thumbnail: imageUrl,
+                    thumbnail: isValidImageUrl ? imageUrl : `https://picsum.photos/800/600?random=1`,
                     labels: labels
                   }}
                   categories={categories}

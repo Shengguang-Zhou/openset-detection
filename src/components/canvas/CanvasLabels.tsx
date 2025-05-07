@@ -32,16 +32,6 @@ export function CanvasLabels({
         const isHighlighted = label.id === highlightedLabelId;
         const color = getLabelColor(label.category, label.isAiSuggestion || false);
         
-        // Common props for all shapes
-        const commonProps = {
-          key: label.id,
-          onClick: () => onLabelSelect(label.id),
-          onTap: () => onLabelSelect(label.id),
-          onMouseEnter: () => onLabelHover(label.id),
-          onMouseLeave: () => onLabelHover(null),
-          listening: true,
-        };
-        
         if (label.type === "rect" && label.coordinates?.length === 2) {
           const [topLeft, bottomRight] = label.coordinates;
           const x = topLeft[0];
@@ -50,7 +40,14 @@ export function CanvasLabels({
           const height = bottomRight[1] - topLeft[1];
           
           return (
-            <Group {...commonProps}>
+            <Group 
+              key={label.id}
+              onClick={() => onLabelSelect(label.id)}
+              onTap={() => onLabelSelect(label.id)}
+              onMouseEnter={() => onLabelHover(label.id)}
+              onMouseLeave={() => onLabelHover(null)}
+              listening={true}
+            >
               <Rect
                 x={x}
                 y={y}
@@ -77,7 +74,14 @@ export function CanvasLabels({
           const points = label.coordinates.flat();
           
           return (
-            <Group {...commonProps}>
+            <Group
+              key={label.id}
+              onClick={() => onLabelSelect(label.id)}
+              onTap={() => onLabelSelect(label.id)}
+              onMouseEnter={() => onLabelHover(label.id)}
+              onMouseLeave={() => onLabelHover(null)}
+              listening={true}
+            >
               <Line
                 points={points}
                 closed
@@ -101,7 +105,14 @@ export function CanvasLabels({
           const [x, y] = label.coordinates[0];
           
           return (
-            <Group {...commonProps}>
+            <Group
+              key={label.id}
+              onClick={() => onLabelSelect(label.id)}
+              onTap={() => onLabelSelect(label.id)}
+              onMouseEnter={() => onLabelHover(label.id)}
+              onMouseLeave={() => onLabelHover(null)}
+              listening={true}
+            >
               <Circle
                 x={x}
                 y={y}

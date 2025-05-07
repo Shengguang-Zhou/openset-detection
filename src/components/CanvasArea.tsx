@@ -49,6 +49,9 @@ const CanvasArea = ({
   setHighlightedLabelId
 }: CanvasAreaProps) => {
   
+  // Generate a dummy component key to force reset when image changes
+  const canvasKey = selectedImage ? `canvas-${selectedImage.id}` : 'no-image';
+  
   return (
     <div className="col-span-7 bg-white rounded-lg border overflow-hidden flex flex-col">
       <div className="p-3 border-b flex items-center justify-between">
@@ -72,7 +75,7 @@ const CanvasArea = ({
       
       <div className="flex-1 flex items-center justify-center bg-gray-100">
         {selectedImage ? (
-          <CanvasProvider>
+          <CanvasProvider key={canvasKey}>
             <ColorProvider>
               <Canvas
                 image={{
