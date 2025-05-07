@@ -88,7 +88,7 @@ const AISuggestionPanel = ({
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-2">
           <h3 className="font-medium">AI建议 ({aiSuggestions.length})</h3>
-          <Badge className="bg-accent text-xs font-normal">OSD</Badge>
+          <Badge className="bg-primary text-xs font-normal">OSD</Badge>
         </div>
         <Button
           variant="outline"
@@ -113,9 +113,9 @@ const AISuggestionPanel = ({
               key={suggestion.id}
               className={`p-3 rounded-md border transition-colors ${
                 isHighlighted
-                  ? "border-blue-400 bg-blue-50"
+                  ? "border-primary bg-orange-50"
                   : isSelected
-                  ? "border-accent bg-blue-50"
+                  ? "border-primary bg-orange-50"
                   : "border-gray-200 hover:border-gray-300"
               }`}
               onClick={() => handleSelectSuggestion(suggestion.id)}
@@ -127,13 +127,13 @@ const AISuggestionPanel = ({
                   <Checkbox
                     checked={isSelected}
                     onCheckedChange={() => handleSelectSuggestion(suggestion.id)}
-                    className="data-[state=checked]:bg-accent"
+                    className="data-[state=checked]:bg-primary"
                   />
                   <div>
                     <div className="flex items-center gap-1 mb-1">
                       <Badge
                         variant="outline"
-                        className="bg-yellow-100 border-yellow-200 text-yellow-800 text-xs"
+                        className="bg-orange-100 border-orange-200 text-orange-800 text-xs"
                       >
                         未知对象
                       </Badge>
@@ -184,7 +184,7 @@ const AISuggestionPanel = ({
 
       {selectedSuggestions.length > 0 && (
         <Button
-          className="w-full bg-accent hover:bg-blue-700"
+          className="w-full bg-primary hover:bg-primary-hover"
           onClick={handleAcceptSelected}
         >
           <CheckCircle className="mr-2 h-4 w-4" />

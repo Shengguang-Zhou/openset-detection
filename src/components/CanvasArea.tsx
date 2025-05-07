@@ -22,6 +22,7 @@ interface CanvasAreaProps {
     osdFlag: 'unknown' | 'reviewed' | 'clean';
     labels: ImageLabel[];
   } | null;
+  categories: string[]; // Added categories
   imagePromptMethod: "upload" | "select";
   promptMode: "free" | "text" | "image";
   onAddLabel: (newLabel: any) => void;
@@ -33,6 +34,7 @@ interface CanvasAreaProps {
 
 const CanvasArea = ({
   selectedImage,
+  categories,
   imagePromptMethod,
   promptMode,
   onAddLabel,
@@ -54,7 +56,7 @@ const CanvasArea = ({
           {selectedImage && selectedImage.osdFlag === 'unknown' && (
             <Button
               size="sm"
-              className="bg-accent hover:bg-blue-700"
+              className="bg-primary hover:bg-primary-hover"
               onClick={() => setActiveRightPanel("ai")}
             >
               <ZapIcon className="mr-2 h-4 w-4" />
@@ -71,6 +73,7 @@ const CanvasArea = ({
               ...selectedImage,
               thumbnail: selectedImage.thumbnail || `https://picsum.photos/200/200?random=${selectedImage.id}`
             } as Image}
+            categories={categories}
             onAddLabel={onAddLabel}
             onUpdateLabel={onUpdateLabel}
             onDeleteLabel={onDeleteLabel}

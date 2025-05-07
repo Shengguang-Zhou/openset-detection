@@ -3,6 +3,7 @@ import { useState, useCallback } from "react";
 
 export function useCanvasState() {
   const [tool, setTool] = useState<"select" | "rect" | "polygon" | "point">("select");
+  const [lastUsedTool, setLastUsedTool] = useState<"rect" | "polygon" | "point">("rect");
   const [selectedLabelId, setSelectedLabelId] = useState<string | null>(null);
   const [drawing, setDrawing] = useState(false);
   const [points, setPoints] = useState<number[]>([]);
@@ -12,6 +13,14 @@ export function useCanvasState() {
   const [isImageLoaded, setIsImageLoaded] = useState(false);
   const [selectionBox, setSelectionBox] = useState<{x: number, y: number, width: number, height: number} | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  
+  // Wrapper for setTool that also updates lastUsedTool
+  const handleSetTool = useCallback((newTool: "select" | "rect" | "polygon" | "point") => {
+    setTool(newTool);
+    if (newTool !== "select") {
+      setLastUsedTool(newTool);
+    }
+  }, []);
   
   const resetDrawing = useCallback(() => {
     setDrawing(false);
@@ -78,14 +87,13 @@ export function useCanvasState() {
     
     if (isSelectMode) {
       setSelectionBox(null);
-    } else {
-      setTool("select");
     }
   }, []);
 
   return {
     tool,
-    setTool,
+    setTool: handleSetTool,
+    lastUsedTool,
     selectedLabelId,
     setSelectedLabelId,
     drawing,

@@ -1,6 +1,6 @@
 
-import React from "react";
-import { Rect, Line } from "react-konva";
+import { Fragment } from 'react';
+import { Circle, Line, Rect } from "react-konva";
 
 interface CanvasDrawingProps {
   drawing: boolean;
@@ -19,51 +19,84 @@ export function CanvasDrawing({
 }: CanvasDrawingProps) {
   if (!drawing) return null;
 
+  // Drawing selection box for reference image selection
   if (isSelectMode && selectionBox) {
-    // Render the selection rectangle for reference image
     return (
       <Rect
-        x={Math.min(selectionBox.x, selectionBox.x + selectionBox.width)}
-        y={Math.min(selectionBox.y, selectionBox.y + selectionBox.height)}
-        width={Math.abs(selectionBox.width)}
-        height={Math.abs(selectionBox.height)}
-        stroke="#F42A35"
-        strokeWidth={2.5}
-        dash={[5, 2]}
-        fill="rgba(244, 42, 53, 0.1)"
+        x={selectionBox.x}
+        y={selectionBox.y}
+        width={selectionBox.width}
+        height={selectionBox.height}
+        stroke="#F97316"
+        strokeWidth={2}
+        dash={[5, 5]}
+        fill="rgba(249, 115, 22, 0.1)"
       />
     );
   }
 
-  if (points.length === 0) return null;
-
+  // Drawing rectangle
   if (tool === "rect" && points.length === 4) {
-    const x1 = points[0];
-    const y1 = points[1];
-    const x2 = points[2];
-    const y2 = points[3];
-    const width = x2 - x1;
-    const height = y2 - y1;
+    const x = Math.min(points[0], points[2]);
+    const y = Math.min(points[1], points[3]);
+    const width = Math.abs(points[2] - points[0]);
+    const height = Math.abs(points[3] - points[1]);
 
     return (
       <Rect
-        x={Math.min(x1, x2)}
-        y={Math.min(y1, y2)}
-        width={Math.abs(width)}
-        height={Math.abs(height)}
+        x={x}
+        y={y}
+        width={width}
+        height={height}
         stroke="#F97316"
         strokeWidth={2}
-        dash={[5, 2]}
+        dash={[5, 5]}
       />
     );
-  } else if (tool === "polygon" && points.length >= 2) {
+  }
+
+  // Drawing polygon
+  if (tool === "polygon" && points.length >= 4) {
+    const flatPoints = points;
+
     return (
-      <Line
-        points={points}
-        stroke="#F97316"
-        strokeWidth={2}
-        dash={[5, 2]}
-      />
+      <Fragment>
+        <Line
+          points={flatPoints}
+          stroke="#F97316"
+          strokeWidth={2}
+          closed={false}
+          dash={[5, 5]}
+        />
+        {points.length > 2 && (
+          <Line
+            points={[
+              points[points.length - 2],
+              points[points.length - 1],
+              points[0],
+              points[1],
+            ]}
+            stroke="#F97316"
+            strokeWidth={2}
+            dash={[5, 5]}
+            opacity={0.5}
+          />
+        )}
+        {flatPoints.map((_, i) => {
+          if (i % 2 === 0) {
+            return (
+              <Circle
+                key={i}
+                x={flatPoints[i]}
+                y={flatPoints[i + 1]}
+                radius={4}
+                fill="#F97316"
+              />
+            );
+          }
+          return null;
+        })}
+      </Fragment>
     );
   }
 

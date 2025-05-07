@@ -1,4 +1,5 @@
-import { useRef, useEffect, useCallback, memo } from "react";
+
+import { useRef, useEffect, useCallback, memo, useState } from "react";
 import { Stage, Layer, Rect } from "react-konva";
 import { useToast } from "@/components/ui/use-toast";
 import { Label } from "@/hooks/useDummyData";
@@ -8,6 +9,7 @@ import { CanvasToolbar } from "@/components/canvas/CanvasToolbar";
 import { CanvasZoomControls } from "@/components/canvas/CanvasZoomControls";
 import { CanvasLabels } from "@/components/canvas/CanvasLabels";
 import { CanvasDrawing } from "@/components/canvas/CanvasDrawing";
+import LabelSelectionDialog from "@/components/LabelSelectionDialog";
 
 interface Image {
   id: string;
@@ -25,6 +27,7 @@ interface OptimizedCanvasProps {
   onSelectRegion?: (region: {x: number, y: number, width: number, height: number}) => void;
   highlightedLabelId: string | null;
   setHighlightedLabelId: (id: string | null) => void;
+  categories: string[]; // Added categories prop
 }
 
 // Using memo for performance optimization
@@ -36,7 +39,8 @@ export const OptimizedCanvas = memo(({
   isSelectMode = false,
   onSelectRegion,
   highlightedLabelId,
-  setHighlightedLabelId
+  setHighlightedLabelId,
+  categories // Added categories prop
 }: OptimizedCanvasProps) => {
   const {
     tool, setTool,
@@ -52,10 +56,39 @@ export const OptimizedCanvas = memo(({
     handleZoomIn, handleZoomOut, handleResetZoom, handleCancelDrawing
   } = useCanvasState();
   
+  // New states for label selection dialog
+  const [isLabelDialogOpen, setIsLabelDialogOpen] = useState(false);
+  const [pendingLabel, setPendingLabel] = useState<{
+    type: string;
+    coordinates: any;
+  } | null>(null);
+  
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<any>(null);
   const imageRef = useRef<HTMLImageElement>(new Image());
   const { toast } = useToast();
+
+  // Handle when a label has been created and needs category
+  const handleLabelCreated = useCallback((labelType: string, coordinates: any) => {
+    setPendingLabel({
+      type: labelType,
+      coordinates
+    });
+    setIsLabelDialogOpen(true);
+  }, []);
+
+  // Handle label selection from dialog
+  const handleLabelSelected = useCallback((category: string) => {
+    if (!pendingLabel) return;
+    
+    onAddLabel({
+      category,
+      type: pendingLabel.type as "rect" | "polygon" | "point",
+      coordinates: pendingLabel.coordinates,
+    });
+    
+    setPendingLabel(null);
+  }, [pendingLabel, onAddLabel]);
 
   // Canvas interactions
   const {
@@ -67,6 +100,7 @@ export const OptimizedCanvas = memo(({
   } = useCanvasInteractions({
     isSelectMode,
     tool,
+    setTool,
     drawing,
     setDrawing,
     points,
@@ -74,14 +108,14 @@ export const OptimizedCanvas = memo(({
     position,
     setPosition,
     scale,
-    setScale, // Make sure we pass setScale
+    setScale,
     selectionBox,
     setSelectionBox,
     isDragging,
     setIsDragging,
     onAddLabel,
-    onSelectRegion,
-    setTool
+    onLabelCreated: handleLabelCreated,
+    onSelectRegion
   });
 
   // Reset selection box when leaving selection mode
@@ -286,6 +320,16 @@ export const OptimizedCanvas = memo(({
       {isDragging && (
         <div className="absolute inset-0 cursor-grabbing z-20 pointer-events-none" />
       )}
+
+      {/* Label selection dialog */}
+      <LabelSelectionDialog
+        isOpen={isLabelDialogOpen}
+        onClose={() => setIsLabelDialogOpen(false)}
+        onSelectLabel={handleLabelSelected}
+        existingLabels={categories}
+      />
     </div>
   );
 });
+
+OptimizedCanvas.displayName = "OptimizedCanvas";

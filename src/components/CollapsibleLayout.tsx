@@ -2,8 +2,6 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
 import { Button } from "./ui/button";
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "./ui/resizable";
-import { cn } from "@/lib/utils";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "./ui/collapsible";
 
 interface CollapsibleLayoutProps {
@@ -20,7 +18,7 @@ export function CollapsibleLayout({
   collapsedLabels
 }: CollapsibleLayoutProps) {
   const [isLeftCollapsed, setIsLeftCollapsed] = useState(false);
-  const [isRightCollapsed, setIsRightCollapsed] = useState(false);
+  const [isRightCollapsed, setIsRightCollapsed] = useState(true);
   
   return (
     <div className="flex h-full w-full">
@@ -52,11 +50,7 @@ export function CollapsibleLayout({
       </Collapsible>
       
       {/* Main content area */}
-      <div className={cn(
-        "flex-1 transition-all", 
-        isLeftCollapsed ? "ml-2" : "ml-3",
-        isRightCollapsed ? "mr-2" : "mr-3"
-      )}>
+      <div className="flex-1 transition-all mx-3">
         {mainContent}
       </div>
       

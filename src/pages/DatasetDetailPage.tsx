@@ -9,7 +9,7 @@ import { Download, ZapIcon, Search } from "lucide-react";
 import { useDummyData } from "@/hooks/useDummyData";
 import ExportYoloDialog from "@/components/ExportYoloDialog";
 import { ImprovedPromptSidebar } from "@/components/ImprovedPromptSidebar";
-import { OptimizedCanvas } from "@/components/OptimizedCanvas";
+import CanvasArea from "@/components/CanvasArea";
 import RightPanels from "@/components/RightPanels";
 import { CollapsibleLayout } from "@/components/CollapsibleLayout";
 import { CollapsedLabelView } from "@/components/CollapsedLabelView";
@@ -186,46 +186,17 @@ const DatasetDetailPage = () => {
   );
   
   const mainContent = (
-    <div className="bg-white rounded-lg border overflow-hidden flex flex-col h-full">
-      <div className="p-3 border-b flex items-center justify-between">
-        <div className="font-medium truncate">
-          {selectedImage ? selectedImage.fileName : "未选择图像"}
-        </div>
-        
-        <div className="flex items-center">
-          {selectedImage && selectedImage.osdFlag === 'unknown' && (
-            <Button
-              size="sm"
-              className="bg-accent hover:bg-blue-700"
-              onClick={() => setActiveRightPanel("ai")}
-            >
-              <ZapIcon className="mr-2 h-4 w-4" />
-              AI 建议
-            </Button>
-          )}
-        </div>
-      </div>
-      
-      <div className="flex-1 flex items-center justify-center bg-gray-100">
-        {selectedImage ? (
-          <OptimizedCanvas
-            image={{
-              ...selectedImage,
-              thumbnail: selectedImage.thumbnail || `https://picsum.photos/200/200?random=${selectedImage.id}`
-            }}
-            onAddLabel={handleAddLabel}
-            onUpdateLabel={handleLabelChange}
-            onDeleteLabel={handleLabelDelete}
-            isSelectMode={imagePromptMethod === "select" && promptMode === "image"}
-            onSelectRegion={setSelectionBox}
-            highlightedLabelId={highlightedLabelId}
-            setHighlightedLabelId={setHighlightedLabelId}
-          />
-        ) : (
-          <div className="text-gray-500">请选择一张图像以开始标注</div>
-        )}
-      </div>
-    </div>
+    <CanvasArea
+      selectedImage={selectedImage}
+      categories={datasetLabels}
+      imagePromptMethod={imagePromptMethod}
+      promptMode={promptMode}
+      onAddLabel={handleAddLabel}
+      onUpdateLabel={handleLabelChange}
+      onDeleteLabel={handleLabelDelete}
+      onSelectRegion={setSelectionBox}
+      setActiveRightPanel={setActiveRightPanel}
+    />
   );
   
   const rightSidebar = (
@@ -278,7 +249,7 @@ const DatasetDetailPage = () => {
               variant="outline"
               onClick={() => handleRunOsd()}
               disabled={dataset.osdStatus === 'running' || isRunningDetection}
-              className={dataset.osdStatus === 'done' ? "bg-blue-50 text-accent border-accent hover:bg-blue-100" : ""}
+              className={dataset.osdStatus === 'done' ? "bg-orange-50 text-primary border-primary hover:bg-orange-100" : ""}
             >
               {(dataset.osdStatus === 'running' || isRunningDetection) ? (
                 <>

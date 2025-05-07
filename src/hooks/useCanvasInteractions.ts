@@ -1,9 +1,11 @@
+
 import { useState, useCallback, useRef } from "react";
 import { useToast } from "@/components/ui/use-toast";
 
 interface CanvasInteractionsProps {
   isSelectMode: boolean;
   tool: "select" | "rect" | "polygon" | "point";
+  setTool: (tool: "select" | "rect" | "polygon" | "point") => void;
   drawing: boolean;
   setDrawing: (drawing: boolean) => void;
   points: number[];
@@ -17,13 +19,14 @@ interface CanvasInteractionsProps {
   isDragging: boolean;
   setIsDragging: (dragging: boolean) => void;
   onAddLabel: (label: any) => void;
+  onLabelCreated: (labelType: string, coordinates: any) => void; // New callback
   onSelectRegion?: (region: { x: number; y: number; width: number; height: number }) => void;
-  setTool: (tool: "select" | "rect" | "polygon" | "point") => void;
 }
 
 export function useCanvasInteractions({
   isSelectMode,
   tool,
+  setTool,
   drawing,
   setDrawing,
   points,
@@ -37,10 +40,11 @@ export function useCanvasInteractions({
   isDragging,
   setIsDragging,
   onAddLabel,
-  onSelectRegion,
-  setTool
+  onLabelCreated, // New callback
+  onSelectRegion
 }: CanvasInteractionsProps) {
   const { toast } = useToast();
+  const lastCoordinatesRef = useRef<any>(null);
   
   // Handle mouse down event
   const handleMouseDown = useCallback((e: any, stageRef: any, imageRef: any, isImageLoaded: boolean) => {
@@ -74,13 +78,9 @@ export function useCanvasInteractions({
       setDrawing(true);
       setPoints([x, y, x, y]); // Initial rectangle: [x1, y1, x2, y2]
     } else if (tool === "point" && !drawing) {
-      // Point directly creates a label
-      onAddLabel({
-        category: "未标注",
-        type: "point",
-        coordinates: [[x, y]],
-      });
-      setTool("select"); // Switch back to select mode after creation
+      // Save point coordinates for label selection dialog
+      lastCoordinatesRef.current = [[x, y]];
+      onLabelCreated("point", [[x, y]]);
     } else if (tool === "polygon") {
       if (!drawing) {
         setDrawing(true);
@@ -90,7 +90,7 @@ export function useCanvasInteractions({
         setPoints([...points, x, y]);
       }
     }
-  }, [isSelectMode, tool, drawing, points, scale, position, onAddLabel, setDrawing, setPoints, setSelectionBox, setIsDragging, setTool]);
+  }, [isSelectMode, tool, drawing, points, scale, position, onLabelCreated, setDrawing, setPoints, setSelectionBox, setIsDragging]);
 
   // Handle mouse move event
   const handleMouseMove = useCallback((e: any, stageRef: any, isImageLoaded: boolean) => {
@@ -178,21 +178,21 @@ export function useCanvasInteractions({
 
       // Ensure rectangle has a certain size
       if (Math.abs(x2 - x1) > 5 && Math.abs(y2 - y1) > 5) {
-        onAddLabel({
-          category: "未标注",
-          type: "rect",
-          coordinates: [
-            [Math.min(x1, x2), Math.min(y1, y2)],
-            [Math.max(x1, x2), Math.max(y1, y2)],
-          ],
-        });
+        const coordinates = [
+          [Math.min(x1, x2), Math.min(y1, y2)],
+          [Math.max(x1, x2), Math.max(y1, y2)]
+        ];
+        
+        // Save coordinates for label selection dialog
+        lastCoordinatesRef.current = coordinates;
+        onLabelCreated("rect", coordinates);
       }
 
       setDrawing(false);
       setPoints([]);
-      setTool("select"); // Switch back to select mode after creation
+      // Don't change the tool to select after creation
     }
-  }, [isSelectMode, tool, drawing, isDragging, points, selectionBox, onAddLabel, onSelectRegion, setDrawing, setIsDragging, setPoints, setSelectionBox, setTool]);
+  }, [isSelectMode, tool, drawing, isDragging, points, selectionBox, onLabelCreated, onSelectRegion, setDrawing, setIsDragging, setPoints, setSelectionBox]);
 
   // Double click to complete polygon
   const handleDblClick = useCallback((e: any) => {
@@ -204,16 +204,14 @@ export function useCanvasInteractions({
       coordinates.push([points[i], points[i + 1]]);
     }
 
-    onAddLabel({
-      category: "未标注",
-      type: "polygon",
-      coordinates,
-    });
+    // Save coordinates for label selection dialog
+    lastCoordinatesRef.current = coordinates;
+    onLabelCreated("polygon", coordinates);
 
     setDrawing(false);
     setPoints([]);
-    setTool("select"); // Switch back to select mode after creation
-  }, [tool, drawing, points, onAddLabel, setDrawing, setPoints, setTool]);
+    // Don't change the tool to select after creation
+  }, [tool, drawing, points, onLabelCreated, setDrawing, setPoints]);
 
   // Handle wheel event for zooming
   const handleWheel = useCallback((e: any, stageRef: any) => {
