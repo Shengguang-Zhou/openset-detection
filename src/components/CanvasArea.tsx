@@ -30,6 +30,8 @@ interface CanvasAreaProps {
   onDeleteLabel: (labelId: string) => void;
   onSelectRegion: (region: {x: number, y: number, width: number, height: number}) => void;
   setActiveRightPanel: (panel: "labels" | "ai") => void;
+  highlightedLabelId: string | null; // Added this missing prop
+  setHighlightedLabelId: (id: string | null) => void; // Added this missing prop
 }
 
 const CanvasArea = ({
@@ -41,9 +43,10 @@ const CanvasArea = ({
   onUpdateLabel,
   onDeleteLabel,
   onSelectRegion,
-  setActiveRightPanel
+  setActiveRightPanel,
+  highlightedLabelId,
+  setHighlightedLabelId
 }: CanvasAreaProps) => {
-  const [highlightedLabelId, setHighlightedLabelId] = useState<string | null>(null);
   
   return (
     <div className="col-span-7 bg-white rounded-lg border overflow-hidden flex flex-col">
