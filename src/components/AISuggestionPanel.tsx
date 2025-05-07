@@ -14,12 +14,16 @@ interface AISuggestionPanelProps {
   };
   categories: string[];
   onAcceptSuggestion: (label: Omit<ImageLabel, "id">) => void;
+  onHighlightLabel?: (id: string | null) => void;
+  highlightedLabelId?: string | null;
 }
 
 const AISuggestionPanel = ({
   image,
   categories,
   onAcceptSuggestion,
+  onHighlightLabel = () => {},
+  highlightedLabelId = null
 }: AISuggestionPanelProps) => {
   const [selectedSuggestions, setSelectedSuggestions] = useState<string[]>([]);
   const [categoryMap, setCategoryMap] = useState<Record<string, string>>({});
@@ -101,17 +105,22 @@ const AISuggestionPanel = ({
       <div className="space-y-3 mt-2">
         {aiSuggestions.map((suggestion) => {
           const isSelected = selectedSuggestions.includes(suggestion.id);
+          const isHighlighted = highlightedLabelId === suggestion.id;
           const confidence = Math.round((suggestion.confidence || 0.7) * 100);
           
           return (
             <div
               key={suggestion.id}
               className={`p-3 rounded-md border transition-colors ${
-                isSelected
+                isHighlighted
+                  ? "border-blue-400 bg-blue-50"
+                  : isSelected
                   ? "border-accent bg-blue-50"
                   : "border-gray-200 hover:border-gray-300"
               }`}
               onClick={() => handleSelectSuggestion(suggestion.id)}
+              onMouseEnter={() => onHighlightLabel && onHighlightLabel(suggestion.id)}
+              onMouseLeave={() => onHighlightLabel && onHighlightLabel(null)}
             >
               <div className="flex justify-between items-start">
                 <div className="flex items-center gap-2">

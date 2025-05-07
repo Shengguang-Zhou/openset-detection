@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useRef } from "react";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -12,6 +11,7 @@ interface CanvasInteractionsProps {
   position: { x: number; y: number };
   setPosition: (position: { x: number; y: number }) => void;
   scale: number;
+  setScale: (scale: number) => void;
   selectionBox: { x: number; y: number; width: number; height: number } | null;
   setSelectionBox: (box: { x: number; y: number; width: number; height: number } | null) => void;
   isDragging: boolean;
@@ -31,6 +31,7 @@ export function useCanvasInteractions({
   position,
   setPosition,
   scale,
+  setScale,
   selectionBox,
   setSelectionBox,
   isDragging,

@@ -1,4 +1,3 @@
-
 import { useRef, useEffect, useCallback, memo } from "react";
 import { Stage, Layer, Rect } from "react-konva";
 import { useToast } from "@/components/ui/use-toast";
@@ -75,6 +74,7 @@ export const OptimizedCanvas = memo(({
     position,
     setPosition,
     scale,
+    setScale, // Make sure we pass setScale
     selectionBox,
     setSelectionBox,
     isDragging,
